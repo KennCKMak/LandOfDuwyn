@@ -57,7 +57,10 @@ public class PlayerCharacter : Character {
 
 	void ReadInput(){
 
-		if (CameraManager.CurrentCameraState != CameraManager.CameraState.FirstPerson)
+        if (Input.GetKeyDown(KeyCode.Space)) {
+            CameraManager.instance.SwitchCameraState();
+        }
+        if (CameraManager.CurrentCameraState != CameraManager.CameraState.FirstPerson)
 			return;
 
 		//MOVEMENT
@@ -97,9 +100,6 @@ public class PlayerCharacter : Character {
 			transform.eulerAngles = new Vector3 (0, Camera.main.transform.eulerAngles.y, 0);
 
 
-		if (Input.GetKeyDown (KeyCode.Space)) {
-			CameraManager.instance.SwitchCameraState ();
-		}
 
 		//HOTKEYS
 		if (Input.GetKeyDown (KeyCode.Alpha1)) {

@@ -40,8 +40,6 @@ public class GameManager : MonoBehaviour {
 	void Start () {
 		Time.timeScale = 1.0f;
 
-		CameraManager.instance.SetCameraState (CameraManager.CameraState.FirstPerson);
-		Cursor.visible = false;
 		//Cursor.lockState = CursorLockMode.Locked;
 
 	}

@@ -24,18 +24,7 @@ public class VillagerManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetKeyDown (KeyCode.R)) {
-			IncreaseRole (AI_Character.Role.Militia);
-		}
-		if (Input.GetKeyDown (KeyCode.T)) {
-			DecreaseRole (AI_Character.Role.Militia);
-		}
-		if (Input.GetKeyDown (KeyCode.Y)) {
-			IncreaseRole (AI_Character.Role.Miner);
-		}
-		if (Input.GetKeyDown (KeyCode.U)) {
-			DecreaseRole (AI_Character.Role.Miner);
-		}
+
 	}
 
 	/// <summary>
@@ -88,6 +77,7 @@ public class VillagerManager : MonoBehaviour {
 			AI_Character chosenVillager = GetAvailableVillager ();
 			UpdateRoleCount (chosenVillager.myRole, newRole);
 			chosenVillager.SetRole (newRole);
+            
 
 		} else {
 			Debug.Log ("NO VILLAGER AVAILABLE");
@@ -107,16 +97,16 @@ public class VillagerManager : MonoBehaviour {
 	public static void UpdateRoleCount(AI_Character.Role oldRole, AI_Character.Role newRole){
 		switch (oldRole) {
 		case AI_Character.Role.Nothing:
-			GameManager.instance.villagers--;
-			break;
+			GameManager.instance.villagers -= 1;
+                break;
 		case AI_Character.Role.Miner:
-			GameManager.instance.miners--;
-			break;
+			GameManager.instance.miners -= 1;
+                break;
 		case AI_Character.Role.Woodcutter:
-			GameManager.instance.woodcutters--;
-			break;
+			GameManager.instance.woodcutters -= 1;
+                break;
 		case AI_Character.Role.Militia:
-			GameManager.instance.militia--;
+			GameManager.instance.militia -= 1;
 			break;
 
 		default:
@@ -124,19 +114,19 @@ public class VillagerManager : MonoBehaviour {
 		}
 
 
-		switch (oldRole) {
+		switch (newRole) {
 		case AI_Character.Role.Nothing:
-			GameManager.instance.villagers++;
+                GameManager.instance.villagers += 1;
 			break;
 		case AI_Character.Role.Miner:
-			GameManager.instance.miners++;
-			break;
+			GameManager.instance.miners += 1;
+                break;
 		case AI_Character.Role.Woodcutter:
-			GameManager.instance.woodcutters++;
-			break;
+			GameManager.instance.woodcutters += 1;
+                break;
 		case AI_Character.Role.Militia:
-			GameManager.instance.militia++;
-			break;
+			GameManager.instance.militia += 1;
+                break;
 
 		default:
 			break;

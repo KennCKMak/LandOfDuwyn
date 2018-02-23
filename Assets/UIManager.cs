@@ -14,7 +14,14 @@ public class UIManager : MonoBehaviour {
 	public TextMeshProUGUI stoneCountText;
 	public TextMeshProUGUI goldCountText;
 
-	void Awake(){
+
+    public GameObject panelRoles;
+    public TextMeshProUGUI villagerCountText;
+    public TextMeshProUGUI minerCountText;
+    public TextMeshProUGUI woodcutterCountText;
+    public TextMeshProUGUI militiaCountText;
+
+    void Awake(){
 		if (instance == null)
 			instance = this;
 		else
@@ -26,7 +33,12 @@ public class UIManager : MonoBehaviour {
 	void Start(){
 
 		UpdateResourceCount ();
+        UpdateVillagerCount ();
 	}
+
+    void Update() {
+        UpdateVillagerCount();
+    }
 	public void ShowCenterText(string message){
 		centerText.gameObject.SetActive (true);
 		centerText.text = message;
@@ -44,12 +56,25 @@ public class UIManager : MonoBehaviour {
 	}
 
 	public void IncreaseRole(int num){
-		VillagerManager.IncreaseRole((AI_Character.Role)num);
+		VillagerManager.IncreaseRole((AI_Character.Role)(num));
+        UpdateVillagerCount();
 	}
 
 	public void DecreaseRole(int num){
 		VillagerManager.DecreaseRole((AI_Character.Role)num);
-	}
+        UpdateVillagerCount();  
+    }
 
+    public void ShowJobPanel(bool b) {
+        panelRoles.SetActive(b);
+    }
+
+    public void UpdateVillagerCount() {
+        villagerCountText.text = "Villager: " + GameManager.instance.villagers;
+        minerCountText.text = "Miner: " + GameManager.instance.miners;
+        woodcutterCountText.text = "Lumberer: " + GameManager.instance.woodcutters;
+        militiaCountText.text = "Militia: " + GameManager.instance.militia;
+
+    }
 
 }

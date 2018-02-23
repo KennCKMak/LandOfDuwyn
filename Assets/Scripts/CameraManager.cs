@@ -41,11 +41,15 @@ public class CameraManager : MonoBehaviour {
 		case CameraState.FirstPerson:
 			FirstPersonCamera.SetActive (true);
 			TopDownCamera.SetActive (false);
-			break;
+                UIManager.instance.ShowJobPanel(false);
+                Cursor.visible = false;
+                break;
 		case CameraState.TopDown:
 			FirstPersonCamera.SetActive (false);
 			TopDownCamera.SetActive (true);
-			break;
+            UIManager.instance.ShowJobPanel(true);
+            Cursor.visible = true;
+                break;
 		default:
 			break;
 
