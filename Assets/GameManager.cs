@@ -11,7 +11,16 @@ public class GameManager : MonoBehaviour {
 	public List<Resource> treeList = new List<Resource>();
 	public List<Resource> rockList = new List<Resource>();
 	public List<Building> buildingsList = new List<Building>();
+	public List<EnemyCharacter> enemyList = new List<EnemyCharacter>();
+
+	public int villagers;
+	public int miners;
+	public int woodcutters;
+	public int militia;
 	//public RockResource[] rockResourceArray;
+	public int WoodAmount;
+	public int StoneAmount;
+	public int GoldAmount;
 
 
 	public static GameManager instance;
@@ -25,9 +34,16 @@ public class GameManager : MonoBehaviour {
 		InitializeVillagers();
 		InitializeResource();
 		InitializeBuildings ();
+		InitializeEnemies ();
 	}
 
 	void Start () {
+		Time.timeScale = 1.0f;
+
+		CameraManager.instance.SetCameraState (CameraManager.CameraState.FirstPerson);
+		Cursor.visible = false;
+		//Cursor.lockState = CursorLockMode.Locked;
+
 	}
 
 	void InitializeVillagers(){
@@ -35,6 +51,7 @@ public class GameManager : MonoBehaviour {
 		for (int i = 0; i < villagersArray.Length; i++) {
 			villagerList.Add (villagersArray [i]);
 		}
+		villagers = villagerList.Count;
 	}
 
 	void InitializeResource(){
@@ -42,12 +59,11 @@ public class GameManager : MonoBehaviour {
 		for (int i = 0; i < resourceArray.Length; i++) {
 			if (resourceArray [i].resourceType == Resource.ResourceType.Wood)
 				treeList.Add (resourceArray [i]);
-			else if (resourceArray [i].resourceType == Resource.ResourceType.Rock)
+			else if (resourceArray [i].resourceType == Resource.ResourceType.Stone)
 				rockList.Add (resourceArray [i]);
 		}
 
 	}
-
 
 	void InitializeBuildings(){
 		Building[] buildingArray = FindObjectsOfType (typeof(Building)) as Building[];
@@ -58,7 +74,13 @@ public class GameManager : MonoBehaviour {
 				buildingsList.Add (buildingArray[i]);
 			
 		}
+	}
 
+	void InitializeEnemies(){
+		EnemyCharacter[] enemyArray = FindObjectsOfType (typeof(EnemyCharacter)) as EnemyCharacter[];
+		for (int i = 0; i < enemyArray.Length; i++) {
+			enemyList.Add (enemyArray [i]);
+		}
 	}
 
 
@@ -70,7 +92,27 @@ public class GameManager : MonoBehaviour {
 	}
 
 
+	public EnemyCharacter FindClosestEnemy(AI_Character character, float detectionRange){
+		int num = -1;
+		float dist = detectionRange + 0.1f;
 
+		NavMeshPath path = new NavMeshPath();
+		for (int i = 0; i < enemyList.Count; i++) {
+			if (!Distance.GetPath (character.transform.position, enemyList [i].transform.position, NavMesh.AllAreas, path)) {
+				break;
+			} else {
+				if (Distance.GetPathLength (path) < dist) {
+					dist = Distance.GetPathLength (path);
+					num = i;
+				}
+			}
+		}
+
+		if (num == -1)
+			return null;
+
+		return enemyList [num];
+	}
 
 	public Resource FindClosestResource(AI_Character character, Resource.ResourceType resource){
 		int num = -1;
@@ -79,7 +121,7 @@ public class GameManager : MonoBehaviour {
 		List<Resource> resourceList;
 		if (resource == Resource.ResourceType.Wood)
 			resourceList = treeList;
-		else if (resource == Resource.ResourceType.Rock)
+		else if (resource == Resource.ResourceType.Stone)
 			resourceList = rockList;
 		else
 			return null;
@@ -123,6 +165,26 @@ public class GameManager : MonoBehaviour {
 		if (num == -1)
 			return null;
 		return buildingsList [num];
+
+	}
+
+	public void AddResource(Resource.ResourceType resourceType, int num){
+		switch (resourceType) {
+		case Resource.ResourceType.Wood:
+			WoodAmount += num;
+			break;
+		case Resource.ResourceType.Stone:
+			StoneAmount += num;
+			break;
+		case Resource.ResourceType.Gold:
+			GoldAmount += num;
+			break;
+
+		default:
+			Debug.Log ("Added nothing");
+			break;
+		}
+		UIManager.instance.UpdateResourceCount ();
 
 	}
 }

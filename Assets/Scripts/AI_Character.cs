@@ -49,13 +49,14 @@ public class AI_Character : Character {
 	Equipment equipment;
 
 	//times we hit something
-	int hit;
+	int itemAmount = 0;
+	int maxItemAmount = 3;
 
 	public Resource.ResourceType myItem = Resource.ResourceType.None;
 
 	public GameObject target;
 	public float stoppingDist = 0.8f;
-	public float resourceGatheringDistThreshold = 1.5f;
+	public float actionDistThreshold = 1.5f;
 
 
 
@@ -98,7 +99,7 @@ public class AI_Character : Character {
 		equipment = GetComponent<Equipment> ();
 
 		health = maxHealth;
-		hit = 0;
+		itemAmount = 0;
 		maxRunSpeed = maxWalkSpeed * runMultiplier;
 		CharacterSpeed = maxWalkSpeed;
 	}
@@ -143,11 +144,13 @@ public class AI_Character : Character {
 		finalDest.x += circ.x;
 		finalDest.z += circ.y;
 
-		if (Distance.GetPath (transform.position, finalDest, NavMesh.AllAreas, myPath)){
+		if (Distance.GetPath (transform.position, finalDest, NavMesh.AllAreas, myPath)) {
 			//agent.SetPath (myPath);
 			SetState (State.Moving);
 			agent.SetDestination (finalDest);
 			agent.Resume ();
+		} else {
+			Debug.Log ("Failed path");
 		}
 	}
 
@@ -156,6 +159,12 @@ public class AI_Character : Character {
 		//Vector3 dist = transform.position- targetPos;
 		//dist.y = 0;
 		if (agent.hasPath && agent.remainingDistance < stoppingDist) {
+			StopMove ();
+		}
+	}
+
+	public void StopMove(){
+		if(agent.hasPath){
 			agent.Stop();
 			agent.ResetPath ();
 
@@ -223,6 +232,7 @@ public class AI_Character : Character {
 
 
 		myTask = newTask;
+		StopRunning();
 		target = null;
 		switch (newTask) {
 		case Task.Idle:
@@ -232,6 +242,12 @@ public class AI_Character : Character {
 		case Task.Return:
 			break;
 
+		case Task.Patrol:
+			break;
+		case Task.Chasing:
+			
+			StartRunning();
+			break;
 
 
 		default:
@@ -244,13 +260,16 @@ public class AI_Character : Character {
 		switch (myRole) {
 		case Role.Nothing:
 			break;
+
+
 		case Role.Miner:
-			UpdateGatherer ();
-			break;
 		case Role.Woodcutter:
 			UpdateGatherer ();
+
+
 			break;
 		case Role.Militia:
+			UpdateMilitia ();
 			break;
 		default:
 			break;
@@ -266,13 +285,17 @@ public class AI_Character : Character {
 		case Role.Miner:
 			equipment.EquipItem (Equipment.RightHand.Pickaxe, Equipment.LeftHand.None);
 			SetTask (Task.Gather);
+
 			break;
 		case Role.Woodcutter:
 			equipment.EquipItem (Equipment.RightHand.Axe, Equipment.LeftHand.None);
 			SetTask (Task.Gather);
 			break;
+
+
 		case Role.Militia:
 			equipment.EquipItem (Equipment.RightHand.Battleaxe, Equipment.LeftHand.SmallShield);
+			SetTask (Task.Patrol);
 			break;
 
 
@@ -285,7 +308,7 @@ public class AI_Character : Character {
 
 		target = null;
 		myRole = newRole;
-		hit = 0;
+		itemAmount = 0;
 
 	}
 
@@ -297,32 +320,30 @@ public class AI_Character : Character {
 				if(myRole == Role.Woodcutter)
 					target = FindResource (Resource.ResourceType.Wood).gameObject;
 				else 
-					target = FindResource (Resource.ResourceType.Rock).gameObject;
+					target = FindResource (Resource.ResourceType.Stone).gameObject;
 
 				if (target) 
 					StartMoveTo (target.transform.position);
 			} else {
 				//moving, forces a move if something bad happens (i..e pushed out)
-				if (myState == State.Stationary && Distance.GetHorizontalDistance (this.gameObject, target) > resourceGatheringDistThreshold)
+				if (myState == State.Stationary && Distance.GetHorizontalDistance (this.gameObject, target) > actionDistThreshold)
 					StartMoveTo (target.transform.position);
 
 				//reached target
-				if (myState == State.Stationary && Distance.GetHorizontalDistance (this.gameObject, target) < resourceGatheringDistThreshold && hit < 3) {
+				if (myState == State.Stationary && Distance.GetHorizontalDistance (this.gameObject, target) < actionDistThreshold && itemAmount < 3) {
 					Attack (target);
 				}
 				//we got the wood
-				if (hit >= 3) {
+				if (itemAmount >= maxItemAmount) {
 					if (myRole == Role.Woodcutter) {
 						SetMyItem (Resource.ResourceType.Wood);
 						anim.SetBool ("Wood", true);
 					} else {
-						SetMyItem (Resource.ResourceType.Rock);
+						SetMyItem (Resource.ResourceType.Stone);
 						anim.SetBool ("Bag", true);
 					}
 
 					SetTask(Task.Return);
-
-					hit = 0;
 				}
 			}
 		//have something, bring back to base
@@ -340,8 +361,11 @@ public class AI_Character : Character {
 
 				//reached target
 				if (myState == State.Stationary && Distance.GetHorizontalDistance(this.gameObject, target) < stoppingDist)  {
-					
+
+					GameManager.instance.AddResource (myItem, 1);
 					SetMyItem(Resource.ResourceType.None);
+					itemAmount = 0;
+
 					SetTask (Task.Gather);
 
 					anim.SetBool ("Wood", false);
@@ -351,7 +375,60 @@ public class AI_Character : Character {
 		}
 	}
 
+	public void UpdateMilitia(){
+		if (myTask == Task.Patrol) {
+			if (!target) {
+				if (!GetCloseEnemy ()) {
+					//no enemies sighted, let's wander around...
+					if (myState == State.Stationary) {
+						Vector2 ranCircle = Random.insideUnitCircle * 20; //* patrol size
+						Vector3 randomLocation = new Vector3 (ranCircle.x, 0.1f, ranCircle.y);
+						StartMoveTo (randomLocation);
+					} else if (myState == State.Moving) {
 
+
+					}
+				} else {
+					SetTask (Task.Chasing);
+				}
+			}
+		} else if (myTask == Task.Chasing) {
+			if (target) {
+				//enemy has moved
+
+				//out of range
+				if (Distance.GetHorizontalDistance (target.transform.position, transform.position) > 10.0f * 1.5f) {
+					SetTask (Task.Patrol);
+					return;
+				}
+
+				//target moved, refind path
+				if (myState == State.Moving && Distance.GetHorizontalDistance (target.transform.position, agent.destination) > 3.0f + actionDistThreshold) {
+					StartMoveTo (target.transform.position);
+				} else  if (myState == State.Stationary && Distance.GetHorizontalDistance (target.transform.position, transform.position) > actionDistThreshold) {
+					//Continuously update to chase 
+					StartMoveTo (target.transform.position);
+				} else if (myState == State.Stationary && Distance.GetHorizontalDistance (target.transform.position, transform.position) < actionDistThreshold) {
+					//reached target
+					AttackEnemy(target);
+				}
+			} else {
+				//no target/lost target
+				if(!GetCloseEnemy()){
+					SetTask (Task.Patrol);
+				} else {
+					StopMove ();
+					target = GetCloseEnemy().gameObject;
+				}
+			}
+
+		}
+	}
+
+	public EnemyCharacter GetCloseEnemy(){
+		//10.0f = detection range
+		return GameManager.instance.FindClosestEnemy(this, 10.0f);
+	}
 
 	public Resource FindResource(Resource.ResourceType resourceType){
 		return GameManager.instance.FindClosestResource (this, resourceType);
@@ -360,16 +437,13 @@ public class AI_Character : Character {
 	public Building FindBuilding(Building.Structure buildingType){
 		return GameManager.instance.FindBuilding (this, buildingType);
 	}
-
-
-
-
-
+		
 
 	public void SetMyItem(Resource.ResourceType itemType){
+		
 		if (myItem == itemType)
 			return;
-		
+		myItem = itemType;
 
 		switch (itemType) {
 
@@ -378,7 +452,7 @@ public class AI_Character : Character {
 			anim.SetBool("Bag", false);
 			break;
 
-		case Resource.ResourceType.Rock:
+		case Resource.ResourceType.Stone:
 		case Resource.ResourceType.Gold:
 			anim.SetBool ("Wood", false);
 			anim.SetBool ("Bag", true);
@@ -414,6 +488,15 @@ public class AI_Character : Character {
 		Attack ();
 	}
 
+	public void AttackEnemy(GameObject obj){
+		if (weaponTimer > 0)
+			return;
+		transform.LookAt (new Vector3(obj.transform.position.x, transform.position.y, obj.transform.position.z));
+		Attack ();
+		obj.GetComponent<EnemyCharacter> ().TakeDamage (20);
+
+	}
+
 	public void Attack(){
 		
 		if (weaponTimer > 0)
@@ -421,7 +504,7 @@ public class AI_Character : Character {
 		
 		anim.SetTrigger ("Attack");
 		weaponTimer = weaponSpeed;
-		hit++;
+		itemAmount++;
 		agent.speed = 0;
 		Invoke ("RestoreMovement", 0.833f);
 	}

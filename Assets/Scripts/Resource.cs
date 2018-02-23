@@ -7,7 +7,7 @@ public class Resource : MonoBehaviour {
 	public enum ResourceType{
 		None,
 		Wood,
-		Rock,
+		Stone,
 		Gold
 	}
 

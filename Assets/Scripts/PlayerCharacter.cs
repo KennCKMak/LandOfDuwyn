@@ -17,9 +17,11 @@ public class PlayerCharacter : Character {
 	}
 
 	State myState;
-
-
 	Equipment equipment;
+	Equipment.RightHand myWeapon = Equipment.RightHand.None;
+	Resource.ResourceType myItem = Resource.ResourceType.None;
+	int itemAmount = 0;
+	int maxItemAmount = 5;
 
 
 	void Awake(){
@@ -49,17 +51,22 @@ public class PlayerCharacter : Character {
 	// Update is called once per frame
 	void Update () {
 		ReadInput ();
-
+		CheckLook ();
 
 	}
 
 	void ReadInput(){
-		float turn = Input.GetAxis ("Horizontal") * Time.deltaTime * 150.0f;
-		float move = Input.GetAxis ("Vertical") * Time.deltaTime * CharacterSpeed;
-		transform.Rotate (0, turn, 0);
-		transform.Translate (Vector3.forward * move);
 
-		anim.SetBool ("Moving", move != 0 || turn != 0);
+		if (CameraManager.CurrentCameraState != CameraManager.CameraState.FirstPerson)
+			return;
+
+		//MOVEMENT
+		float move = Input.GetAxis ("Vertical") * Time.deltaTime * CharacterSpeed;
+		float strafe = Input.GetAxis ("Horizontal") * Time.deltaTime * CharacterSpeed;
+		transform.Translate (Vector3.forward * move);
+		transform.Translate (Vector3.right * strafe);
+
+		anim.SetBool ("Moving", move != 0 || strafe != 0);
 		if (move < 0) {
 			anim.SetFloat ("Direction", -1.0f);
 		} else {
@@ -78,7 +85,37 @@ public class PlayerCharacter : Character {
 
 		if (weaponTimer > 0)
 			weaponTimer -= Time.deltaTime;
-		
+
+		//CAMERA VIEWING
+			float xRot = Camera.main.transform.eulerAngles.x + Input.GetAxis ("Mouse Y") * 8.0f * -1.0f;
+			if (xRot < 310 && xRot > 150.0f)
+				xRot = 310.0f;
+			if (xRot > 50.0f && xRot < 150.0f)
+				xRot = 50.0f;
+			Vector3 newLook = new Vector3 (xRot, Camera.main.transform.eulerAngles.y + Input.GetAxis ("Mouse X") * 12.0f, 0);
+			Camera.main.transform.rotation = Quaternion.Euler (newLook);
+			transform.eulerAngles = new Vector3 (0, Camera.main.transform.eulerAngles.y, 0);
+
+
+		if (Input.GetKeyDown (KeyCode.Space)) {
+			CameraManager.instance.SwitchCameraState ();
+		}
+
+		//HOTKEYS
+		if (Input.GetKeyDown (KeyCode.Alpha1)) {
+			Equip (Equipment.RightHand.RoyalSword);
+		}
+		if (Input.GetKeyDown (KeyCode.Alpha2)) {
+			Equip (Equipment.RightHand.Axe);
+		}
+		if (Input.GetKeyDown (KeyCode.Alpha3)) {
+			Equip (Equipment.RightHand.Pickaxe);
+		}
+
+		//Drop item
+		if (Input.GetKeyDown (KeyCode.G)) {
+			DropItem ();
+		}
 	}
 
 	public void CheckHealth(){
@@ -137,10 +174,120 @@ public class PlayerCharacter : Character {
 		anim.SetTrigger ("Attack");
 		CharacterSpeed = 0;
 		Invoke ("RestoreMovement", 0.833f);
+
+		CheckHit ();
 	}
+
+	public void CheckLook(){
+		Ray ray = new Ray (Camera.main.transform.position, Camera.main.transform.forward);
+		RaycastHit hit;
+		if (Physics.Raycast (ray, out hit, 3.0f)) {
+
+			if (hit.transform.tag == "Resource") {
+				if (itemAmount < 3) {
+					if (hit.transform.GetComponent<Resource> ().resourceType == Resource.ResourceType.Wood)
+						UIManager.instance.ShowCenterText ("Press LMB with the AXE to collect");
+					else
+						UIManager.instance.ShowCenterText ("Press LMB with the PICKAXE to collect");
+				}else
+					UIManager.instance.ShowCenterText ("Can't carry anymore!");
+
+			}
+			if (hit.transform.tag == "Building" && 
+				hit.transform.GetComponent<Building> ().structure == Building.Structure.ResourceDrop &&
+				myItem != Resource.ResourceType.None) {
+				UIManager.instance.ShowCenterText ("Press 'G' to drop off resources!");
+			}
+		} else {
+			UIManager.instance.HideCenterText ();
+		}
+	}
+
+	public void CheckHit(){
+		Ray ray = new Ray (Camera.main.transform.position, Camera.main.transform.forward);
+		RaycastHit hit;
+		if (Physics.Raycast (ray, out hit, 5.0f)) {
+			if (hit.transform.tag == "Resource") {
+				Resource resource = hit.transform.gameObject.GetComponent<Resource> ();
+				switch (resource.resourceType) {
+				case Resource.ResourceType.Wood:
+					if (myWeapon != Equipment.RightHand.Axe)
+						break;
+					itemAmount++;
+
+
+					if (itemAmount < 3)
+						return;
+					myItem = resource.resourceType;
+					anim.SetBool ("Wood", true);
+					break;
+
+				case Resource.ResourceType.Gold:
+				case Resource.ResourceType.Stone:
+					if (myWeapon != Equipment.RightHand.Pickaxe)
+						break;
+					itemAmount++;
+
+
+					if (itemAmount < 3)
+						return;
+					myItem = resource.resourceType;
+					anim.SetBool ("Bag", true);
+					break;
+				default:
+					break;
+
+				}
+			} else if (hit.transform.tag == "Enemy") {
+				hit.transform.GetComponent<EnemyCharacter> ().TakeDamage (20);
+				Debug.Log ("Hit enemy");
+			}
+		}
+
+	}
+
+	public void DropItem(){
+		Ray ray = new Ray (Camera.main.transform.position, Camera.main.transform.forward);
+		RaycastHit hit;
+		if (Physics.Raycast (ray, out hit, 3.0f)) {
+
+			if (hit.transform.tag == "Building" && hit.transform.GetComponent<Building>()) {
+				if (hit.transform.GetComponent<Building> ().structure == Building.Structure.ResourceDrop) {
+					myItem = Resource.ResourceType.None;
+					anim.SetBool ("Wood", false);
+					anim.SetBool ("Bag", false);
+					itemAmount = 0;
+				}
+			}
+		}
+	}
+
+
 	public void RestoreMovement(){
 		CharacterSpeed = maxWalkSpeed;
 	}
 
+	public void Equip(Equipment.RightHand newWeapon){
+		if (myWeapon == newWeapon) {
+			myWeapon = Equipment.RightHand.None;
+			equipment.EquipItem (Equipment.RightHand.None, Equipment.LeftHand.None);
+			return;
+		} 
+		myWeapon = newWeapon;
+		switch (newWeapon) {
+		case Equipment.RightHand.Axe:
+		case Equipment.RightHand.Pickaxe:
+			equipment.EquipItem (newWeapon, Equipment.LeftHand.None);
+			break;
+
+		case Equipment.RightHand.Sword:
+		case Equipment.RightHand.RoyalSword:
+			equipment.EquipItem (newWeapon, Equipment.LeftHand.KiteShield);
+			break;
+		default:
+			equipment.EquipItem (Equipment.RightHand.None, Equipment.LeftHand.None);
+			break;
+		}
+	}
 
 }

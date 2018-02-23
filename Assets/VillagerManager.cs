@@ -11,20 +11,31 @@ public class VillagerManager : MonoBehaviour {
 	}
 	// Use this for initialization
 	void Start () {
-		IncreaseRole (AI_Character.Role.Woodcutter);
+		/*IncreaseRole (AI_Character.Role.Woodcutter);
 		IncreaseRole (AI_Character.Role.Woodcutter);
 		IncreaseRole (AI_Character.Role.Woodcutter);
 		IncreaseRole (AI_Character.Role.Miner);
 		IncreaseRole (AI_Character.Role.Miner);
 		IncreaseRole (AI_Character.Role.Miner);
 		IncreaseRole (AI_Character.Role.Militia);
-		IncreaseRole (AI_Character.Role.Militia);
+		IncreaseRole (AI_Character.Role.Militia);*/
 		
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		
+		if (Input.GetKeyDown (KeyCode.R)) {
+			IncreaseRole (AI_Character.Role.Militia);
+		}
+		if (Input.GetKeyDown (KeyCode.T)) {
+			DecreaseRole (AI_Character.Role.Militia);
+		}
+		if (Input.GetKeyDown (KeyCode.Y)) {
+			IncreaseRole (AI_Character.Role.Miner);
+		}
+		if (Input.GetKeyDown (KeyCode.U)) {
+			DecreaseRole (AI_Character.Role.Miner);
+		}
 	}
 
 	/// <summary>
@@ -53,11 +64,82 @@ public class VillagerManager : MonoBehaviour {
 		return null;
 	}
 
+	public static bool CheckVillagerInRole(AI_Character.Role role){
+		for (int i = 0; i < GameManager.instance.villagerList.Count; i++) {
+			if (GameManager.instance.villagerList [i].myRole == role) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static AI_Character GetVillagerInRole(AI_Character.Role role){
+		for (int i = 0; i < GameManager.instance.villagerList.Count; i++) {
+			if (GameManager.instance.villagerList [i].myRole == role) {
+				return GameManager.instance.villagerList [i];
+			}
+		}
+		return null;
+	}
+
+
 	public static void IncreaseRole(AI_Character.Role newRole){
 		if (CheckAvailableVillager ()) {
-			GetAvailableVillager ().SetRole (newRole);
+			AI_Character chosenVillager = GetAvailableVillager ();
+			UpdateRoleCount (chosenVillager.myRole, newRole);
+			chosenVillager.SetRole (newRole);
+
 		} else {
 			Debug.Log ("NO VILLAGER AVAILABLE");
+		}
+	}
+
+	public static void DecreaseRole(AI_Character.Role removingRole){
+		if (CheckVillagerInRole (removingRole)) {
+			AI_Character chosenVillager = GetVillagerInRole (removingRole);
+			UpdateRoleCount (chosenVillager.myRole, AI_Character.Role.Nothing);
+			chosenVillager.SetRole (AI_Character.Role.Nothing);
+		} else {
+			Debug.Log ("No villagers in that role");
+		}
+	}
+
+	public static void UpdateRoleCount(AI_Character.Role oldRole, AI_Character.Role newRole){
+		switch (oldRole) {
+		case AI_Character.Role.Nothing:
+			GameManager.instance.villagers--;
+			break;
+		case AI_Character.Role.Miner:
+			GameManager.instance.miners--;
+			break;
+		case AI_Character.Role.Woodcutter:
+			GameManager.instance.woodcutters--;
+			break;
+		case AI_Character.Role.Militia:
+			GameManager.instance.militia--;
+			break;
+
+		default:
+			break;
+		}
+
+
+		switch (oldRole) {
+		case AI_Character.Role.Nothing:
+			GameManager.instance.villagers++;
+			break;
+		case AI_Character.Role.Miner:
+			GameManager.instance.miners++;
+			break;
+		case AI_Character.Role.Woodcutter:
+			GameManager.instance.woodcutters++;
+			break;
+		case AI_Character.Role.Militia:
+			GameManager.instance.militia++;
+			break;
+
+		default:
+			break;
 		}
 	}
 
