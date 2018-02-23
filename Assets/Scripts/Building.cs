@@ -2,7 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Wood : Resource {
+public class Building : MonoBehaviour {
+
+
+	public enum Structure {
+		Base,
+		House,
+		ResourceDrop
+	}
+
+	public Structure structure;
 
 	// Use this for initialization
 	void Start () {
