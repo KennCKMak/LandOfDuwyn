@@ -4,21 +4,90 @@ using UnityEngine;
 
 public class PlayerCameraControl : MonoBehaviour {
 	public Transform target;
-	public Vector3 offset;
+	public Vector3 initialOffset;
+	public Vector3 additionalOffset;
+	public float scrollPower;
+	public float cameraSmoothness;
+	public enum CameraType {
+		FPS,
+		TopDown
+	};
+
+	public CameraType cameraType;
+
 	//public GameObject player;
 	// Use this for initialization
+	void Awake(){
+		
+	}
+
+
 	void Start () {
 	//	player = GameObject.FindGameObjectWithTag ("Player");
 		if (!target)
 			target = GameObject.Find ("CameraTarget").transform;
-		offset = target.transform.position - transform.position;
+		additionalOffset = Vector3.zero;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (target) {
-			transform.position = target.transform.position - offset;
+			if(cameraType == CameraType.TopDown)
+				transform.position = Vector3.Lerp(transform.position, target.transform.position - initialOffset - additionalOffset, cameraSmoothness * Time.deltaTime);
+			else 
+				transform.position = target.transform.position - initialOffset - additionalOffset;
+		}
 
+
+		//zoom in, zoom out
+		float mouseWheel = Input.GetAxis ("Mouse ScrollWheel");
+		if (cameraType == CameraType.TopDown) {
+			additionalOffset.y = Mathf.Clamp (additionalOffset.y += scrollPower * mouseWheel, -50.0f, 10.0f);
+		}
+
+		if (cameraType == CameraType.TopDown) {
+			DrawLineTD ();
+		}
+	}
+
+	void OnEnable(){
+		transform.position = target.transform.position - initialOffset - additionalOffset;
+	}
+
+	void OnDisable(){
+
+		if (cameraType == CameraType.TopDown) {
+			for (int i = 0; i < GameManager.instance.treeList.Count; i++) {
+
+				GameManager.instance.treeList [i].seenByCamera = false;
+			}
+
+
+			for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
+
+				GameManager.instance.rockList [i].seenByCamera = false;
+			}
+		}
+	}
+
+	public void DrawLineTD(){
+		for (int i = 0; i < GameManager.instance.treeList.Count; i++) {
+			Vector3 viewPointPort = GetComponent<Camera>().WorldToViewportPoint (GameManager.instance.treeList [i].transform.position);
+			if (viewPointPort.x >= 0 && viewPointPort.x <= 1 && viewPointPort.y >= 0 && viewPointPort.y <= 1) { 
+				GameManager.instance.treeList [i].seenByCamera = true;
+			} else {
+				GameManager.instance.treeList [i].seenByCamera = false;
+			}
+		}
+
+
+		for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
+			Vector3 viewPointPort = GetComponent<Camera>().WorldToViewportPoint (GameManager.instance.rockList [i].transform.position);
+			if (viewPointPort.x >= 0 && viewPointPort.x <= 1 && viewPointPort.y >= 0 && viewPointPort.y <= 1) { 
+				GameManager.instance.rockList [i].seenByCamera = true;
+			} else {
+				GameManager.instance.rockList [i].seenByCamera = false;
+			}
 		}
 	}
 }
