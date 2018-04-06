@@ -29,36 +29,48 @@ public class ConstructionManager : MonoBehaviour {
 			instance = this;
 		else
 			Destroy (gameObject);
-
 		currentPhase = ConstructionPhase.NotBuilding;
 	}
 
 
 	// Use this for initialization
 	void Start () {
-		
+
+		setCurrentPhase(ConstructionPhase.NotBuilding);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (CameraManager.CurrentCameraState != CameraManager.CameraState.TopDown) {
-			currentPhase = ConstructionPhase.NotBuilding;
-			return;
+			if (currentPhase != ConstructionPhase.NotBuilding) {
+				setCurrentPhase (ConstructionPhase.NotBuilding);
+				return;
+			}
 			//this only works IF you are currently building
-		} else  {
-			if(currentPhase == ConstructionPhase.NotBuilding)
-				currentPhase = ConstructionPhase.SelectingBuilding;
+		} else if (CameraManager.CurrentCameraState == CameraManager.CameraState.TopDown) {
+			if (currentPhase == ConstructionPhase.NotBuilding)
+				setCurrentPhase (ConstructionPhase.SelectingBuilding);
 		}
 
 
-		if (Input.GetKeyDown (KeyCode.Escape)) {
+
+		if (Input.GetKeyDown (KeyCode.Escape) || Input.GetMouseButtonDown (1)) {
 			Cancel ();
+		}
+		if (Input.GetKeyDown (KeyCode.Q)) {
+
 		}
 
 		if (currentPhase == ConstructionPhase.SelectingBuilding) {
-			if (Input.GetKeyDown (KeyCode.Alpha1)) 
+			if (Input.GetKeyDown (KeyCode.Alpha1))
 				StartBuilding (BuildingPrefabs [0]);
-			
+			if (Input.GetKeyDown (KeyCode.Alpha2))
+				StartBuilding (BuildingPrefabs [1]);
+			if (Input.GetKeyDown (KeyCode.Alpha3))
+				StartBuilding (BuildingPrefabs [2]);
+			if (Input.GetKeyDown (KeyCode.Alpha4))
+				StartBuilding (BuildingPrefabs [3]);
+		
 		} else if (currentPhase == ConstructionPhase.PlacingBuilding) {
 
 			UpdateHologramMovement ();
@@ -66,18 +78,21 @@ public class ConstructionManager : MonoBehaviour {
 				PlaceBuilding ();
 			}
 		}
-
-
-
 	}
 
 	void StartBuilding(GameObject selectedBuilding){
-
 		GameObject newBuilding = Instantiate (selectedBuilding, Camera.main.ScreenToWorldPoint (Input.mousePosition), Quaternion.identity) as GameObject;
 
-		if (newBuilding.GetComponent<Building> ().structure == Building.Structure.ResourceDrop)
-			newBuilding.transform.FindChild ("HighlightRange").gameObject.SetActive (true);
+		if (newBuilding.GetComponent<Building> ().structure == Building.Structure.ResourceDrop) {
+			GameObject highlightRange = newBuilding.transform.FindChild ("HighlightRange").gameObject;
+			highlightRange.SetActive (true);
+			highlightRange.transform.localScale = 
+				new Vector3 (newBuilding.GetComponent<Building> ().resourceActivationRange*2, 
+					highlightRange.transform.localScale.y, 
+					newBuilding.GetComponent<Building> ().resourceActivationRange*2);
 
+		}
+		newBuilding.name = selectedBuilding.name;
 
 		newBuilding.GetComponent<Building> ().SetColliders (false);
 		//disable the building scripts immediately
@@ -87,14 +102,14 @@ public class ConstructionManager : MonoBehaviour {
 		//disable all collision
 
 		hologram = newBuilding;
-		currentPhase = ConstructionPhase.PlacingBuilding;
+		setCurrentPhase(ConstructionPhase.PlacingBuilding);
 
 	}
 
 	void UpdateHologramMovement(){
 		if (!hologram) {
 			Debug.Log ("wtf? Lost hologram target");
-			currentPhase = ConstructionPhase.SelectingBuilding;
+			setCurrentPhase(ConstructionPhase.SelectingBuilding);
 			return;
 		}
 
@@ -136,7 +151,8 @@ public class ConstructionManager : MonoBehaviour {
 	}
 
 	bool isHologramValid(){
-		return false;
+		//TODO: CHECK FOR VALID PLACEMENT
+		return true;
 	}
 
 	void PlaceBuilding(){
@@ -151,30 +167,57 @@ public class ConstructionManager : MonoBehaviour {
 		//building is now functioning
 		hologram.GetComponent<Building> ().enabled = true;
 
-		hologram.GetComponent<Building> ().SetColliders (false);
+		hologram.GetComponent<Building> ().SetColliders (true);
 
 
 		hologram = null;
 
 
+		setCurrentPhase (ConstructionPhase.NotBuilding);
+	}
 
-		currentPhase = ConstructionPhase.NotBuilding;
+	public void setCurrentPhase(ConstructionPhase phase){
+		currentPhase = phase;
+		switch (phase) {
+		case ConstructionPhase.NotBuilding:
+			UIManager.instance.ShowConstructionHelpText (false);
+
+			break;
+		case ConstructionPhase.SelectingBuilding:
+			UIManager.instance.ShowConstructionHelpText (true);
+
+			break;
+		case ConstructionPhase.PlacingBuilding:
+			UIManager.instance.ShowConstructionHelpText (true);
+			break;
+		default:
+			break;
+			
+
+		}
 	}
 
 	void Cancel(){
 		switch (currentPhase) {
 		case ConstructionPhase.NotBuilding:
+			//nothing happens here, you haven't even selected anything!
 			break;
 
 		case ConstructionPhase.SelectingBuilding:
-			//here is where you press a button and select your choice
+			//here is where you press a number and select your choice
 
 
 			break;
 
 		case ConstructionPhase.PlacingBuilding:
 			//here hologram is placing something
+			if (hologram) {
+				Destroy (hologram.gameObject);
+				//hologram is now null
+				setCurrentPhase(ConstructionPhase.SelectingBuilding);
 
+
+			}
 
 			break;
 

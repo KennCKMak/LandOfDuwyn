@@ -33,8 +33,10 @@ public class Resource : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		GameManager.instance.Add (this);
-		
+		FindSurroundingBuildings ();
 	}
+
+
 	
 	// Update is called once per frame
 	void Update () {
@@ -73,6 +75,21 @@ public class Resource : MonoBehaviour {
 		lines.Add (newLineObject.GetComponent<LineRenderer>());
 		lineRenderers++;
 	}
+
+	public void FindSurroundingBuildings(){
+		foreach (Building building in GameManager.instance.buildingsList) {
+			if (building.structure == Building.Structure.ResourceDrop &&
+			   Distance.GetHorizontalDistance (gameObject, building.gameObject) <= building.resourceActivationRange) {
+				if (building.dropType.ToString () == resourceType.ToString () || building.dropType == Building.ResourceDropType.All) {
+					if (listOfNearbyBuildings.Contains (building))
+						continue;
+					AddActivatingStructure (building);
+					Activated = true;
+				}
+			}
+		}
+	}
+
 
 	/// <summary>
 	/// Draws lines from which this resource was activated by

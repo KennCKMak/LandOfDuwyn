@@ -15,7 +15,9 @@ public class WindmillFan : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		fan.transform.RotateAround (fan.transform.position, Vector3.forward, fanSpeed * Time.deltaTime);
+
+		//fan.transform.RotateAround (fan.transform.position, Vector3.forward, fanSpeed * Time.deltaTime);
+		fan.transform.Rotate (Vector3.down, fanSpeed * Time.deltaTime, Space.Self);
 		
 	}
 }

@@ -45,12 +45,16 @@ public class CameraManager : MonoBehaviour {
 
 	public void SetCameraState(CameraState newState){
 		CurrentCameraState = newState;
+		UIManager.instance.SwitchActionBar (newState);
+
 		switch (newState) {
 		case CameraState.FirstPerson:
 			FirstPersonCamera.SetActive (true);
 			TopDownCamera.SetActive (false);
 			UIManager.instance.ShowJobPanel (false);
 			Cursor.visible = false;
+			Cursor.lockState = CursorLockMode.Locked;
+
 
 			foreach (Building building in GameManager.instance.buildingsList) {
 				building.HighlightArea (false);
@@ -61,8 +65,10 @@ public class CameraManager : MonoBehaviour {
 		case CameraState.TopDown:
 			FirstPersonCamera.SetActive (false);
 			TopDownCamera.SetActive (true);
-            UIManager.instance.ShowJobPanel(true);
-            Cursor.visible = true;
+			UIManager.instance.ShowJobPanel (true);
+			Cursor.visible = true;
+			Cursor.lockState = CursorLockMode.None;
+			Cursor.lockState = CursorLockMode.Confined;
 
 
                 break;

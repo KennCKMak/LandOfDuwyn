@@ -68,6 +68,7 @@ public class AI_Character : Character {
 
 	float elapsedTime = 0.0f;
 
+	bool deathFalling = false;
 
 	// Use this for initialization
 
@@ -120,8 +121,11 @@ public class AI_Character : Character {
 
 	// Update is called once per frame
 	void Update () {
-		if (myState == State.Dead)
+		if (myState == State.Dead) {
+			if(deathFalling)
+				transform.position = transform.position + (Vector3.down * (2.0f * Time.deltaTime));
 			return;
+		}
 
 
 
@@ -136,6 +140,9 @@ public class AI_Character : Character {
 			weaponTimer -= Time.deltaTime;
 		UpdateState ();
 		UpdateRole ();
+
+		if (health <= 0)
+			SetState (State.Dead);
 	}
 
 	public void StartMoveTo(Vector3 dest){
@@ -203,7 +210,9 @@ public class AI_Character : Character {
 			break;
 		case State.Dead:
 			rb.constraints = RigidbodyConstraints.FreezeAll;
-			anim.SetTrigger ("DeathA");
+
+			
+			Death ();
 			break;
 		default:
 			break;
@@ -240,7 +249,7 @@ public class AI_Character : Character {
 			break;
 		case Task.Wait:
 			//this is when gatherer's are waiting around for something to do
-			elapsedTime = 99.0f;
+			elapsedTime = 99.0f; //high number so they immediately start walking around
 			break;
 		case Task.Gather:
 			break;
@@ -383,7 +392,7 @@ public class AI_Character : Character {
 		if (myTask == Task.Return) {
 			//Find base
 			if (!target) {
-				target = FindBuilding (Building.Structure.ResourceDrop).buildingTarget;
+				target = FindBuildingResourceDrop (Building.Structure.ResourceDrop, myItem).buildingTarget;
 				if (!target)
 					return;
 				StartMoveTo (target.transform.position);
@@ -462,8 +471,9 @@ public class AI_Character : Character {
 					//no enemies sighted, let's wander around...
 					if (myState == State.Stationary) {
 
-						elapsedTime += Time.deltaTime;
-						if (elapsedTime < 6.0f)
+						elapsedTime += Time.deltaTime; 
+						//waits 1.5f seconds only befor emoving again
+						if (elapsedTime < 1.5f)
 							return;
 
 						Vector2 ranCircle = Random.insideUnitCircle * 20; //* patrol size
@@ -522,6 +532,10 @@ public class AI_Character : Character {
 
 	public Building FindBuilding(Building.Structure buildingType){
 		return GameManager.instance.FindBuilding (this, buildingType);
+	}
+
+	public Building FindBuildingResourceDrop(Building.Structure buildingType, Resource.ResourceType resourceType){
+		return GameManager.instance.FindBuildingResourceDrop (this, buildingType, resourceType);
 	}
 		
 
@@ -626,12 +640,24 @@ public class AI_Character : Character {
 		agent.speed = CharacterSpeed;
 	}
 
-	public void TakeDamage(){
-
+	public void TakeDamage(int num){
+		health -= num;
 	}
 
 	public void Death(){
 
+
+		if(Random.value > 0.5f)
+			anim.SetTrigger ("DeathA");
+		else 
+			anim.SetTrigger ("DeathB");
+		GameManager.instance.Remove (this);
+		StartCoroutine (DeathSequence());
+	}
+	IEnumerator DeathSequence(){
+		Destroy (gameObject, 4.5f);
+		yield return new WaitForSeconds (4.0f);
+		deathFalling = true;
 	}
 
 

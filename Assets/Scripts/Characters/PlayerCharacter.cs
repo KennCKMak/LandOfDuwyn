@@ -58,8 +58,10 @@ public class PlayerCharacter : Character {
 	void ReadInput(){
 
         if (Input.GetKeyDown(KeyCode.Q)) {
-			
-			CameraManager.instance.SwitchCameraState();
+			if (ConstructionManager.instance.currentPhase == ConstructionManager.ConstructionPhase.NotBuilding ||
+				ConstructionManager.instance.currentPhase == ConstructionManager.ConstructionPhase.SelectingBuilding)  {
+				CameraManager.instance.SwitchCameraState ();
+			}
 			anim.SetBool ("Moving", false);
         }
         if (CameraManager.CurrentCameraState != CameraManager.CameraState.FirstPerson)
@@ -181,9 +183,13 @@ public class PlayerCharacter : Character {
 	}
 
 	public void CheckLook(){
+		UIManager.instance.HideTargetText();
+		UIManager.instance.HideCenterText ();
+		UIManager.instance.HideHealthBar();
+
 		Ray ray = new Ray (Camera.main.transform.position, Camera.main.transform.forward);
 		RaycastHit hit;
-		if (Physics.Raycast (ray, out hit, 3.0f)) {
+		if (Physics.Raycast (ray, out hit, 4.0f)) {
 
 			if (hit.transform.tag == "Resource") {
 				Resource resource = hit.transform.GetComponent<Resource> ();
@@ -203,16 +209,28 @@ public class PlayerCharacter : Character {
 				myItem != Resource.ResourceType.None) {
 				UIManager.instance.ShowCenterText ("Press 'G' to drop off resources!");
 			}
+			if (hit.transform.tag == "Building") {
+				Building currentBuilding = hit.transform.root.gameObject.GetComponent<Building> ();
+				UIManager.instance.ShowFlavourText (currentBuilding);
+			}
+			if (hit.transform.root.tag == "Ally") {
+				AI_Character ally = hit.transform.root.gameObject.GetComponent<AI_Character> ();
+				UIManager.instance.UpdateHealthBar (ally.health, ally.maxHealth, ally.transform.name);
+			}
+			if (hit.transform.root.tag == "Enemy") {
+				EnemyCharacter enemy = hit.transform.root.gameObject.GetComponent<EnemyCharacter> ();
+				UIManager.instance.UpdateHealthBar (enemy.health, enemy.maxHealth, enemy.transform.name);
+			}
+
 		} else {
-			UIManager.instance.HideCenterText ();
-						UIManager.instance.HideHealthBar();
+			//not seeing anything
 		}
 	}
 
 	public void CheckHit(){
 		Ray ray = new Ray (Camera.main.transform.position, Camera.main.transform.forward);
 		RaycastHit hit;
-		if (Physics.Raycast (ray, out hit, 5.0f)) {
+		if (Physics.Raycast (ray, out hit, 6.0f)) {
 			if (hit.transform.tag == "Resource") {
 				if (hitCount >= maxHitCount && myItem != Resource.ResourceType.None) {
 					UIManager.instance.ShowCenterText ("Can't carry anymore!");
@@ -263,8 +281,9 @@ public class PlayerCharacter : Character {
 		RaycastHit hit;
 		if (Physics.Raycast (ray, out hit, 3.0f)) {
 
-			if (hit.transform.tag == "Building" && hit.transform.GetComponent<Building>()) {
-				if (hit.transform.GetComponent<Building> ().structure == Building.Structure.ResourceDrop) {
+			if (hit.transform.tag == "ResourceDrop" && hit.transform.root.GetComponent<Building>()) {
+				if (hit.transform.root.GetComponent<Building> ().structure == Building.Structure.ResourceDrop) {
+					GameManager.instance.AddResource (myItem, 1);
 					myItem = Resource.ResourceType.None;
 					anim.SetBool ("Wood", false);
 					anim.SetBool ("Bag", false);

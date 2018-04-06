@@ -24,6 +24,11 @@ public class UIManager : MonoBehaviour {
 	public TextMeshProUGUI targetText;
 	public HealthBar healthBar;
 
+	public GameObject TPSBar;
+	public GameObject TDBar;
+
+	public GameObject ConstructionHelpText;
+
     void Awake(){
 		if (instance == null)
 			instance = this;
@@ -42,9 +47,18 @@ public class UIManager : MonoBehaviour {
     void Update() {
         UpdateVillagerCount();
     }
+		
+	public void SetCenterText(string message){
+		centerText.text = message;
+	}
 	public void ShowCenterText(string message){
 		centerText.gameObject.SetActive (true);
 		centerText.text = message;
+	}
+
+	public void ShowCenterText(){
+
+		centerText.gameObject.SetActive (true);
 	}
 
 	public void HideCenterText(){
@@ -81,23 +95,88 @@ public class UIManager : MonoBehaviour {
     }
 
 
+	public void SetTargetText(string name){
+		targetText.text = name;
+	}
+	public void ShowTargetText(string name){
+		SetTargetText (name);
+		targetText.gameObject.SetActive (true);
+	}
+
+	public void ShowTargetText(){
+		targetText.gameObject.SetActive (true);
+	}
+	public void HideTargetText(){
+		targetText.gameObject.SetActive (false);
+	}
+
+	public void UpdateHealthBar(float currHP, float maxHP){
+		healthBar.UpdateBarNoLerp (currHP, maxHP);
+		ShowHealthBar ();
+	}
 
 	public void UpdateHealthBar(float currHP, float maxHP, string name){
-		healthBar.UpdateBar (currHP, maxHP);
-		targetText.text = name;
+		healthBar.UpdateBarNoLerp (currHP, maxHP);
+		ShowTargetText(name);
 
 		ShowHealthBar ();
 	}
 
 	public void ShowHealthBar(){
-
-		targetText.gameObject.SetActive (true);
+		ShowTargetText ();
 		healthBar.gameObject.SetActive (true);
 	}
 
 	public void HideHealthBar(){
-		targetText.gameObject.SetActive (false);
+		HideTargetText ();
 		healthBar.gameObject.SetActive (false);
 	}
 
+	public void ShowFlavourText(Building building){
+		SetTargetText (building.name);
+		string flavourText;
+
+
+		switch (building.name) {
+		case "House":
+			flavourText =  ("Used to increase maximum workers\nCurrent Population: " + GameManager.instance.totalVillagers + "/" + GameManager.instance.maxVillagers);
+			break;
+		case "Smith":
+			flavourText = ("Drop site for rocks and gold minerals\nRange: " + building.resourceActivationRange);
+			break;
+		case "Sawmill":
+			flavourText = ("Drop site for wood/lumber\nRange: " + building.resourceActivationRange);
+			break;
+		case "Windmill":
+			flavourText = ("Drop site for all types of materials\nRange: " + building.resourceActivationRange);
+			break;
+		default:
+			flavourText = ("No info available for " + building.name);
+			break;
+		}
+
+		ShowTargetText ();
+		ShowCenterText (flavourText);
+
+	}
+
+	public void SwitchActionBar(CameraManager.CameraState newState){
+		switch (newState) {
+		case CameraManager.CameraState.FirstPerson:
+			TPSBar.SetActive (true);
+			TDBar.SetActive (false);
+			break;
+		case CameraManager.CameraState.TopDown:
+			TPSBar.SetActive (false);
+			TDBar.SetActive (true);
+			break;
+		default:
+			Debug.Log ("Wtf?");
+			break;
+		}
+	}
+
+	public void ShowConstructionHelpText(bool b){
+		ConstructionHelpText.SetActive (b);
+	}
 }
