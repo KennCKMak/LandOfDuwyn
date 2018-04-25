@@ -142,7 +142,7 @@ public class GameManager : MonoBehaviour {
 			return;
 		buildingsList.Add (newBuilding);
 
-		int num = 0;
+		int num = 1;
 		foreach (Building building in buildingsList) {
 			if (building.structure == Building.Structure.House)
 				num++;

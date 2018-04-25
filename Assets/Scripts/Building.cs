@@ -26,7 +26,7 @@ public class Building : MonoBehaviour {
 	public enum ResourceDropType{
 		None,
 		Wood,
-		Rock,
+		Stone,
 		All
 	}
 	public ResourceDropType dropType = ResourceDropType.None;
@@ -80,7 +80,7 @@ public class Building : MonoBehaviour {
 			}
 		}
 
-		if (dropType == ResourceDropType.All || dropType == ResourceDropType.Rock) {
+		if (dropType == ResourceDropType.All || dropType == ResourceDropType.Stone) {
 			for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
 				if (Distance.GetHorizontalDistance (GameManager.instance.rockList [i].gameObject, this.gameObject) <= resourceActivationRange) {
 					GameManager.instance.rockList [i].Activated = true;
