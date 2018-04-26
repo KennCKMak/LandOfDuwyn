@@ -346,7 +346,7 @@ public class AI_Character : Character {
 						SetTask(Task.Wait);
 						return;
 					}
-				} else { 
+				} else if (myRole == Role.Miner) { 
 					if (FindResource (Resource.ResourceType.Stone)) {
 						target = FindResource (Resource.ResourceType.Stone).gameObject;
 					} else { 
@@ -422,6 +422,8 @@ public class AI_Character : Character {
 				if (myRole == Role.Woodcutter) {
 					if (FindResource (Resource.ResourceType.Wood)) {
 						target = FindResource (Resource.ResourceType.Wood).gameObject;
+						if (target)
+							SetTask (Task.Gather);
 					} else { 
 						//no enemies atm, let's wander around...
 						if (myState == State.Stationary) {
@@ -439,6 +441,8 @@ public class AI_Character : Character {
 				} else { 
 					if (FindResource (Resource.ResourceType.Stone)) {
 						target = FindResource (Resource.ResourceType.Stone).gameObject;
+						if (target)
+							SetTask (Task.Gather);
 					} else { 
 						//no work atm, let's wander around...
 
@@ -601,7 +605,10 @@ public class AI_Character : Character {
 		
 		if (weaponTimer > 0)
 			return;
-		
+
+		if (target)
+			GetComponent<UnitSFX> ().UpdateHitSFX (target);
+
 		anim.SetTrigger ("Attack");
 		weaponTimer = weaponSpeed;
 		agent.speed = 0;
@@ -613,6 +620,9 @@ public class AI_Character : Character {
 	public void Gather(){
 		if (weaponTimer > 0)
 			return;
+
+		if (target)
+			GetComponent<UnitSFX> ().UpdateHitSFX (target);
 
 		anim.SetTrigger ("Attack");
 		weaponTimer = weaponSpeed;

@@ -62,15 +62,22 @@ public class ConstructionManager : MonoBehaviour {
 		}
 
 		if (currentPhase == ConstructionPhase.SelectingBuilding) {
-			if (Input.GetKeyDown (KeyCode.Alpha1))
+			if (Input.GetKeyDown (KeyCode.Alpha1)) {
 				StartBuilding (BuildingPrefabs [0]);
-			if (Input.GetKeyDown (KeyCode.Alpha2))
+				UIManager.instance.SelectActionBar (0);
+			}
+			if (Input.GetKeyDown (KeyCode.Alpha2)){
 				StartBuilding (BuildingPrefabs [1]);
-			if (Input.GetKeyDown (KeyCode.Alpha3))
+				UIManager.instance.SelectActionBar (1);
+			}
+			if (Input.GetKeyDown (KeyCode.Alpha3)){
 				StartBuilding (BuildingPrefabs [2]);
-			if (Input.GetKeyDown (KeyCode.Alpha4))
+				UIManager.instance.SelectActionBar (2);
+			}	
+			if (Input.GetKeyDown (KeyCode.Alpha4)) {
 				StartBuilding (BuildingPrefabs [3]);
-		
+				UIManager.instance.SelectActionBar (3);
+			}
 		} else if (currentPhase == ConstructionPhase.PlacingBuilding) {
 
 			UpdateHologramMovement ();

@@ -72,6 +72,8 @@ public class PlayerCameraControl : MonoBehaviour {
 
 	public void DrawLineTD(){
 		for (int i = 0; i < GameManager.instance.treeList.Count; i++) {
+			if (!GameManager.instance.treeList [i])
+				continue;
 			Vector3 viewPointPort = GetComponent<Camera>().WorldToViewportPoint (GameManager.instance.treeList [i].transform.position);
 			if (viewPointPort.x >= 0 && viewPointPort.x <= 1 && viewPointPort.y >= 0 && viewPointPort.y <= 1) { 
 				GameManager.instance.treeList [i].seenByCamera = true;
@@ -82,6 +84,8 @@ public class PlayerCameraControl : MonoBehaviour {
 
 
 		for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
+			if (!GameManager.instance.rockList [i])
+				continue;
 			Vector3 viewPointPort = GetComponent<Camera>().WorldToViewportPoint (GameManager.instance.rockList [i].transform.position);
 			if (viewPointPort.x >= 0 && viewPointPort.x <= 1 && viewPointPort.y >= 0 && viewPointPort.y <= 1) { 
 				GameManager.instance.rockList [i].seenByCamera = true;

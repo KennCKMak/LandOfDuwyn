@@ -72,6 +72,8 @@ public class Building : MonoBehaviour {
 	public void ActivateResourcesAroundDrop(){
 		if (dropType == ResourceDropType.All || dropType == ResourceDropType.Wood) {
 			for (int i = 0; i < GameManager.instance.treeList.Count; i++) {
+				if(!(GameManager.instance.treeList [i]))
+					continue;
 				if (Distance.GetHorizontalDistance (GameManager.instance.treeList [i].gameObject, this.gameObject) <= resourceActivationRange) {
 					//Debug.Log (gameObject.name + " activated " + GameManager.instance.treeList [i].gameObject.name + "w/ range " + Distance.GetHorizontalDistance (GameManager.instance.treeList [i].gameObject, this.gameObject));
 					GameManager.instance.treeList [i].Activated = true;
@@ -82,6 +84,8 @@ public class Building : MonoBehaviour {
 
 		if (dropType == ResourceDropType.All || dropType == ResourceDropType.Stone) {
 			for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
+				if(!(GameManager.instance.rockList [i]))
+					continue;
 				if (Distance.GetHorizontalDistance (GameManager.instance.rockList [i].gameObject, this.gameObject) <= resourceActivationRange) {
 					GameManager.instance.rockList [i].Activated = true;
 					GameManager.instance.rockList [i].AddActivatingStructure (this);

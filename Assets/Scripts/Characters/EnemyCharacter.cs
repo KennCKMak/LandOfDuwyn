@@ -348,6 +348,8 @@ public class EnemyCharacter : Character {
 	public void Attack(GameObject obj){
 		if (weaponTimer > 0)
 			return;
+
+
 		transform.LookAt (new Vector3(obj.transform.position.x, transform.position.y, obj.transform.position.z));
 		Attack ();
 	}
@@ -370,6 +372,9 @@ public class EnemyCharacter : Character {
 
 		if (weaponTimer > 0)
 			return;
+
+		if (target)
+			GetComponent<UnitSFX> ().UpdateHitSFX (target);
 
 		anim.SetTrigger ("Attack");
 		weaponTimer = weaponSpeed;

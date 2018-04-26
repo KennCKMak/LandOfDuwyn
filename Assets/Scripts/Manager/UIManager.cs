@@ -26,6 +26,9 @@ public class UIManager : MonoBehaviour {
 
 	public GameObject TPSBar;
 	public GameObject TDBar;
+	public Color highlightedColor;
+	public Color defaultColor;
+
 
 	public GameObject ConstructionHelpText;
 
@@ -158,6 +161,33 @@ public class UIManager : MonoBehaviour {
 		ShowTargetText ();
 		ShowCenterText (flavourText);
 
+	}
+
+	public void SelectActionBar(int num){
+		DeselectActionBar ();
+		if (CameraManager.CurrentCameraState == CameraManager.CameraState.FirstPerson) {
+			TPSBar.transform.GetChild (num).GetComponent<Image> ().color = highlightedColor;
+			TPSBar.transform.GetChild (num).GetComponent<RectTransform>().localScale = new Vector3 (1.08f, 1.08f, 1.0f);
+		} else {
+			TDBar.transform.GetChild (num).GetComponent<Image> ().color = highlightedColor;
+			TDBar.transform.GetChild (num).GetComponent<RectTransform>().localScale = new Vector3 (1.08f, 1.08f, 1.0f);
+		}
+			
+	}
+
+	public void DeselectActionBar(){
+
+		//loop through action bar tools
+		for (int i = 0; i < 3; i++) {
+			TPSBar.transform.GetChild (i).GetComponent<RectTransform>().localScale = new Vector3 (1.0f, 1.0f, 1.0f);
+			TPSBar.transform.GetChild (i).GetComponent<Image> ().color = defaultColor;
+		}
+
+		//loop through td action bar tools
+		for (int i = 0; i < 4; i++) {
+			TDBar.transform.GetChild (i).GetComponent<RectTransform>().localScale = new Vector3 (1.0f, 1.0f, 1.0f);
+			TDBar.transform.GetChild (i).GetComponent<Image> ().color = defaultColor;
+		}
 	}
 
 	public void SwitchActionBar(CameraManager.CameraState newState){

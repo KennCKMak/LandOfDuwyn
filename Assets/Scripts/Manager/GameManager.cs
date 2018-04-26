@@ -262,7 +262,8 @@ public class GameManager : MonoBehaviour {
 			if (resourceList [i].Activated == false) {
 				continue;
 			}
-
+			if (!resourceList [i])
+				continue;
 			if (!Distance.GetPath (character.transform.position, resourceList [i].transform.position, NavMesh.AllAreas, path)) {
 				break;
 			} else {

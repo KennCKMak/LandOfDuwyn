@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -11,6 +10,15 @@ public class AudioManager : MonoBehaviour {
 
     public BGM[] bgm;
     public SFX[] sfx;
+	//hitting tree, metal, rock, etc
+	public SFX[] hitTypeSFX;
+	public enum hitSoundType
+	{
+		None,
+		Wood,
+		Stone,
+		Flesh
+	}
     
     public static AudioManager instance;
 
@@ -42,7 +50,7 @@ public class AudioManager : MonoBehaviour {
 
 	void Start () {
         //play bgm at start?
-        PlayBGM("Encounter");
+        PlayBGM("HumanX1");
 	}
 	
 	// Update is called once per frame
@@ -105,6 +113,33 @@ public class AudioManager : MonoBehaviour {
             return s;
         return null;
     }
+
+	public SFX RequestHitSFX(hitSoundType hitType){
+		int numOfSounds = 0;
+		string soundName = hitType.ToString();
+		switch (hitType) {
+		case hitSoundType.Wood: 
+			numOfSounds = 4;
+			break;
+		case hitSoundType.Stone:
+		case hitSoundType.Flesh:
+			numOfSounds = 3;
+			break;
+		default:
+			break;
+		}
+
+		numOfSounds = UnityEngine.Random.Range (1, numOfSounds);
+		soundName += numOfSounds;
+
+		SFX s = Array.Find(hitTypeSFX, sound => sound.name == soundName);
+		if (s == null) {
+			Debug.LogWarning("Sound: " + soundName + " was not found");
+		} else
+			return s;
+		return null;
+
+	}
 
     public void ToggleMuteBGM() {
         if (!muteBGM) {

@@ -231,6 +231,9 @@ public class PlayerCharacter : Character {
 		Ray ray = new Ray (Camera.main.transform.position, Camera.main.transform.forward);
 		RaycastHit hit;
 		if (Physics.Raycast (ray, out hit, 6.0f)) {
+			
+			GetComponent<UnitSFX> ().UpdateHitSFX (hit.transform.gameObject);
+
 			if (hit.transform.tag == "Resource") {
 				if (hitCount >= maxHitCount && myItem != Resource.ResourceType.None) {
 					UIManager.instance.ShowCenterText ("Can't carry anymore!");
@@ -302,21 +305,31 @@ public class PlayerCharacter : Character {
 		if (myWeapon == newWeapon) {
 			myWeapon = Equipment.RightHand.None;
 			equipment.EquipItem (Equipment.RightHand.None, Equipment.LeftHand.None);
+			UIManager.instance.DeselectActionBar ();
 			return;
 		} 
+
+		AudioManager.instance.PlaySFX ("EquipItem");
+
 		myWeapon = newWeapon;
 		switch (newWeapon) {
 		case Equipment.RightHand.Axe:
+			equipment.EquipItem (newWeapon, Equipment.LeftHand.None);
+			UIManager.instance.SelectActionBar (1);
+			break;
 		case Equipment.RightHand.Pickaxe:
 			equipment.EquipItem (newWeapon, Equipment.LeftHand.None);
+			UIManager.instance.SelectActionBar (2);
 			break;
 
 		case Equipment.RightHand.Sword:
 		case Equipment.RightHand.RoyalSword:
 			equipment.EquipItem (newWeapon, Equipment.LeftHand.KiteShield);
+			UIManager.instance.SelectActionBar (0);
 			break;
 		default:
 			equipment.EquipItem (Equipment.RightHand.None, Equipment.LeftHand.None);
+			UIManager.instance.DeselectActionBar ();
 			break;
 		}
 	}
