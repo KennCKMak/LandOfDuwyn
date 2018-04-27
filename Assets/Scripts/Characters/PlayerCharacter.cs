@@ -249,8 +249,7 @@ public class PlayerCharacter : Character {
 
 					if (hitCount < 3)
 						return;
-					myItem = resource.resourceType;
-					anim.SetBool ("Wood", true);
+					setMyItem(resource.resourceType);
 					resource.DepleteAmount (1);
 					break;
 
@@ -263,8 +262,7 @@ public class PlayerCharacter : Character {
 
 					if (hitCount < 3)
 						return;
-					myItem = resource.resourceType;
-					anim.SetBool ("Bag", true);
+					setMyItem(resource.resourceType);
 					resource.DepleteAmount (1);
 					break;
 				default:
@@ -280,6 +278,8 @@ public class PlayerCharacter : Character {
 	}
 
 	public void DropItem(){
+		if (myItem == Resource.ResourceType.None)
+			return;
 		Ray ray = new Ray (Camera.main.transform.position, Camera.main.transform.forward);
 		RaycastHit hit;
 		if (Physics.Raycast (ray, out hit, 3.0f)) {
@@ -287,12 +287,40 @@ public class PlayerCharacter : Character {
 			if (hit.transform.tag == "ResourceDrop" && hit.transform.root.GetComponent<Building>()) {
 				if (hit.transform.root.GetComponent<Building> ().structure == Building.Structure.ResourceDrop) {
 					GameManager.instance.AddResource (myItem, 1);
-					myItem = Resource.ResourceType.None;
-					anim.SetBool ("Wood", false);
-					anim.SetBool ("Bag", false);
+					setMyItem (Resource.ResourceType.None);
 					hitCount = 0;
+
+					AudioManager.instance.PlaySFX ("DropItem");
 				}
 			}
+		}
+	}
+
+	public void setMyItem(Resource.ResourceType newResourceType){
+		myItem = newResourceType;
+		switch (newResourceType) {
+		case Resource.ResourceType.None:
+			anim.SetBool ("Wood", false);
+			anim.SetBool ("Bag", false);
+			GameManager.instance.ShowBuildingDropZoneIndicator (false);
+			break;
+		case Resource.ResourceType.Wood:
+			anim.SetBool ("Wood", true);
+			anim.SetBool ("Bag", false);
+			GameManager.instance.ShowBuildingDropZoneIndicator (true);
+			break;
+		case Resource.ResourceType.Stone:
+			anim.SetBool ("Wood", false);
+			anim.SetBool ("Bag", true);
+			GameManager.instance.ShowBuildingDropZoneIndicator (true);
+			break;
+		case Resource.ResourceType.Gold:
+			anim.SetBool ("Wood", false);
+			anim.SetBool ("Bag", true);
+			GameManager.instance.ShowBuildingDropZoneIndicator (true);
+			break;
+		default:
+			break;
 		}
 	}
 

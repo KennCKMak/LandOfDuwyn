@@ -24,6 +24,9 @@ public class TestTrees : MonoBehaviour {
 		{
 			posYMax = (int)terrain.terrainData.size.y;
 		}
+		while (numberOfPlacedObjects < numberOfObjects) {
+			PlaceObject ();
+		}
 	}
 	// Update is called once per frame
 	void Update ()
@@ -47,6 +50,8 @@ public class TestTrees : MonoBehaviour {
 		{
 			Vector3 position = new Vector3 (posx - xDistance / 2, posy - 0.4211683f, posz + zDistance / 2);
 			GameObject newObject = Instantiate(objectToPlace, position, Quaternion.identity) as GameObject; // create object
+			newObject.transform.eulerAngles =new Vector3(0, Random.Range(0, 359), 0);
+			newObject.transform.localScale = new Vector3(newObject.transform.localScale.x, Random.Range(0.40f, 1.00f), newObject.transform.localScale.z);
 			newObject.transform.parent = transform.GetChild(0).transform;
 			newObject.transform.name = objectToPlace.transform.name;
 			numberOfPlacedObjects++;

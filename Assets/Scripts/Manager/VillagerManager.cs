@@ -79,8 +79,6 @@ public class VillagerManager : MonoBehaviour {
 			chosenVillager.SetRole (newRole);
             
 
-		} else {
-			Debug.Log ("NO VILLAGER AVAILABLE");
 		}
 	}
 
@@ -89,9 +87,7 @@ public class VillagerManager : MonoBehaviour {
 			AI_Character chosenVillager = GetVillagerInRole (removingRole);
 			UpdateRoleCount (chosenVillager.myRole, AI_Character.Role.Villager);
 			chosenVillager.SetRole (AI_Character.Role.Villager);
-		} else {
-			Debug.Log ("No villagers in that role");
-		}
+		} 
 	}
 
 	public static void UpdateRoleCount(AI_Character.Role oldRole, AI_Character.Role newRole){

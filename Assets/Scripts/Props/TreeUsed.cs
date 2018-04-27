@@ -11,6 +11,8 @@ public class TreeUsed : MonoBehaviour {
 	Vector3 directionFall;
 	bool slidingDown;
 	float startY;
+
+	bool playedLandingSFX = false;
 	// Use this for initialization
 	void Start () {
 		//apply random force so this thing starts falling
@@ -23,7 +25,7 @@ public class TreeUsed : MonoBehaviour {
 		float z = Random.Range (-1.0f, 1.0f);
 		directionFall = new Vector3 (x, 0, z);
 
-
+		PlayTreeSound ("TreeCrack");
 		StartCoroutine (DestroyTree ());
 		Destroy (gameObject, 14.0f);
 	}
@@ -33,7 +35,10 @@ public class TreeUsed : MonoBehaviour {
 		if (Mathf.Abs(topPoint.transform.position.y - topY) <= 0.2f)
 			Fall ();
 
-
+		if (!playedLandingSFX && topPoint.transform.position.y - 0.1f <= (0.95f * topY)) {
+			playedLandingSFX = true;
+			PlayTreeSound ("TreeCrash");
+		}
 
 		if (slidingDown) {
 			transform.position = transform.position + (Vector3.down * (2.0f * Time.deltaTime));
@@ -43,7 +48,7 @@ public class TreeUsed : MonoBehaviour {
 	}
 
 	void Fall(){
-		Debug.Log ("falling");
+		//Debug.Log ("falling");
 		Vector3 topPosition = topPoint.transform.position;
 		//topPosition.y = gameObject.GetComponent<CapsuleCollider> ().height;
 
@@ -58,6 +63,19 @@ public class TreeUsed : MonoBehaviour {
 
 		startY = topPoint.transform.position.y;
 		slidingDown = true;
+	}
+
+	void PlayTreeSound(string s){
+		SFX sfx = AudioManager.instance.RequestSFX (s);
+		if (sfx == null) 
+			return;
+		if (!GetComponent<AudioSource> ())
+			gameObject.AddComponent<AudioSource> ();
+		AudioSource source = GetComponent<AudioSource> ();
+		source.volume = sfx.volume;
+		source.pitch = sfx.pitch;
+		source.spatialBlend = 1.0f;
+		source.PlayOneShot (sfx.clip);
 	}
 
 }

@@ -48,8 +48,10 @@ public class Resource : MonoBehaviour {
 	}
 
 	void UsedAnimation(){
-		if (usedResourcePrefab) 
-			Instantiate (usedResourcePrefab, transform.position, transform.rotation);
+		if (usedResourcePrefab) {
+			GameObject usedPrefab = Instantiate (usedResourcePrefab, transform.position, transform.rotation) as GameObject;
+			usedPrefab.transform.localScale = transform.localScale;
+		}
 		DestroyResource ();
 	}
 
@@ -62,7 +64,10 @@ public class Resource : MonoBehaviour {
 	}
 
 	public void DestroyResource(){
-		GameManager.instance.treeList.Remove (this);
+		if(resourceType == ResourceType.Wood)
+			GameManager.instance.treeList.Remove (this);
+		else if (resourceType == ResourceType.Stone)
+			GameManager.instance.stoneList.Remove (this);
 		Destroy (this.gameObject);
 	}
 

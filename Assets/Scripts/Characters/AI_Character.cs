@@ -43,7 +43,7 @@ public class AI_Character : Character {
 		Militia,
 	};
 
-	State myState;
+	public State myState;
 	public Role myRole;
 	public Task myTask;
 
@@ -66,20 +66,29 @@ public class AI_Character : Character {
 	public float stoppingDist = 0.8f;
 	public float actionDistThreshold = 1.5f;
 
-	float elapsedTime = 0.0f;
+	public float elapsedTime = 0.0f;
 
+
+	bool Initialized = false;
 	bool deathFalling = false;
 
 	// Use this for initialization
 
 	void Awake(){
-		InitializeComponents ();
-		InitializeVillager (); 
-
+		Initialize ();
 
 	}
 	void Start () {
 		GameManager.instance.Add (this);
+		Initialize ();
+	}
+
+	public void Initialize(){
+		if (Initialized)
+			return;
+
+		InitializeComponents ();
+		InitializeVillager (); 
 	}
 
 	void InitializeComponents(){
@@ -96,7 +105,7 @@ public class AI_Character : Character {
 		agent.speed = this.maxWalkSpeed;
 		agent.acceleration = this.acceleration;
 		agent.angularSpeed = this.rotSpeed;
-		agent.avoidancePriority = Random.Range (50, 100);
+		agent.avoidancePriority = Random.Range (0,100);
 		running = false;
 		myPath = new NavMeshPath ();
 	}
@@ -158,6 +167,8 @@ public class AI_Character : Character {
 			agent.Resume ();
 		} else {
 			Debug.Log ("Failed path");
+			agent.ResetPath ();
+			agent.Resume ();
 		}
 	}
 
@@ -405,6 +416,7 @@ public class AI_Character : Character {
 				if (myState == State.Stationary && Distance.GetHorizontalDistance(this.gameObject, target) < stoppingDist)  {
 
 					GameManager.instance.AddResource (myItem, 1);
+					GetComponent<UnitSFX> ().PlayDropItemSFX ();
 					SetMyItem(Resource.ResourceType.None);
 					hitCount = 0;
 
@@ -438,7 +450,7 @@ public class AI_Character : Character {
 						}
 						return;
 					}
-				} else { 
+				} else if (myRole == Role.Miner) { 
 					if (FindResource (Resource.ResourceType.Stone)) {
 						target = FindResource (Resource.ResourceType.Stone).gameObject;
 						if (target)
@@ -464,6 +476,8 @@ public class AI_Character : Character {
 					StartMoveTo (target.transform.position);
 				else
 					return;
+			} else {
+				SetTask (Task.Gather);
 			}
 		}
 	}
@@ -597,7 +611,7 @@ public class AI_Character : Character {
 			return;
 		transform.LookAt (new Vector3(obj.transform.position.x, transform.position.y, obj.transform.position.z));
 		Attack ();
-		obj.GetComponent<EnemyCharacter> ().TakeDamage (20);
+		obj.GetComponent<EnemyCharacter> ().TakeDamage (weaponDamage);
 
 	}
 
@@ -652,6 +666,7 @@ public class AI_Character : Character {
 
 	public void TakeDamage(int num){
 		health -= num;
+		AudioManager.instance.PlayAnnouncement ("AnnounceUnderAttack");
 	}
 
 	public void Death(){

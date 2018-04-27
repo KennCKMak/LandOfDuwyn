@@ -5,11 +5,18 @@ using UnityEngine.Audio;
 
 public class UnitSFX : MonoBehaviour {
 
+	public string walkSoundName = "Walk";
+	public string swingSoundName = "Swing1";
+	public string damagedSoundName = "GetHit";
+	public string deathSoundName = "Death";
+	public string dropItemSoundName = "DropItem";
+
     private AudioSource sourceWalk;
 	private AudioSource sourceSwing;
 	private AudioSource sourceAttack;
     private AudioSource sourceDamaged;
 	private AudioSource sourceDeath;
+	private AudioSource sourceDropItem;
 
     [HideInInspector] public bool sfxIsInitialized = false;
 
@@ -19,12 +26,20 @@ public class UnitSFX : MonoBehaviour {
 		sourceAttack = gameObject.AddComponent<AudioSource> ();
 		sourceDamaged = gameObject.AddComponent<AudioSource>();
 		sourceDeath = gameObject.AddComponent<AudioSource>();
+		sourceDropItem = gameObject.AddComponent<AudioSource>();
 
 		SetUpSounds();
     }
 
+	void Update(){
+		if (!sfxIsInitialized)
+			SetUpSounds ();
+	}
+
 	public void SetUpSounds() {
-        SetUpWalkClip();
+		if (!AudioManager.instance)
+			return;
+		SetUpWalkClip();
 		SetUpSwingClip();
 		SetUpAttackClip();
 		SetUpDamagedClip();
@@ -33,7 +48,7 @@ public class UnitSFX : MonoBehaviour {
     }
 
 	public void SetUpWalkClip() {
-		SFX walkSFX = AudioManager.instance.RequestSFX ("Walk");
+		SFX walkSFX = AudioManager.instance.RequestSFX (walkSoundName);
 		if (walkSFX != null) {
 			sourceWalk.clip = walkSFX.clip;
 			sourceWalk.volume = walkSFX.volume;
@@ -44,7 +59,7 @@ public class UnitSFX : MonoBehaviour {
     }
 
 	public void SetUpSwingClip() {
-		SFX swingSFX = AudioManager.instance.RequestSFX ("Swing1");
+		SFX swingSFX = AudioManager.instance.RequestSFX (swingSoundName);
 		if (swingSFX != null) {
 			sourceSwing.clip = swingSFX.clip;
 			sourceSwing.volume = swingSFX.volume;
@@ -55,7 +70,7 @@ public class UnitSFX : MonoBehaviour {
     }
 
 	public void SetUpDamagedClip() {
-		SFX damagedSFX = AudioManager.instance.RequestSFX ("GetHit");
+		SFX damagedSFX = AudioManager.instance.RequestSFX (damagedSoundName);
 		if (damagedSFX != null) {
 			sourceDamaged.clip = damagedSFX.clip;
 			sourceDamaged.volume = damagedSFX.volume;
@@ -65,7 +80,7 @@ public class UnitSFX : MonoBehaviour {
     }
 
 	public void SetUpDeathClip() {
-		SFX deathSFX = AudioManager.instance.RequestSFX ("Death");
+		SFX deathSFX = AudioManager.instance.RequestSFX (deathSoundName);
 		if (deathSFX != null) {
 			sourceDeath.clip = deathSFX.clip;
 			sourceDeath.volume = deathSFX.volume;
@@ -84,9 +99,19 @@ public class UnitSFX : MonoBehaviour {
 		}
 	}
 
+	public void SetUpDropItemClip(){
+		SFX dropItemSFX = AudioManager.instance.RequestSFX (dropItemSoundName);
+		if (dropItemSFX != null) {
+			sourceDropItem.clip = dropItemSFX.clip;
+			sourceDropItem.volume = dropItemSFX.volume;
+			sourceDropItem.pitch = dropItemSFX.pitch;
+			sourceDropItem.spatialBlend = 1.0f;
+		}
+	}
+
     public void PlayWalkSFX() {
         if (!AudioManager.instance.muteSFX)
-            sourceWalk.Play();
+			sourceWalk.PlayOneShot(sourceWalk.clip);
     }
 
 	/// <summary>
@@ -94,12 +119,12 @@ public class UnitSFX : MonoBehaviour {
 	/// </summary>
     public void PlaySwingSFX() {
         if (!AudioManager.instance.muteSFX)
-            sourceSwing.Play();
+			sourceSwing.PlayOneShot(sourceSwing.clip);
     }
 
     public void PlayDamagedSFX() {
         if (!AudioManager.instance.muteSFX)
-            sourceDamaged.Play();
+			sourceDamaged.PlayOneShot(sourceDamaged.clip);
     }
 
 	/// <summary>
@@ -107,12 +132,17 @@ public class UnitSFX : MonoBehaviour {
 	/// </summary>
 	public void PlayAttackSFX() {
 		if (!AudioManager.instance.muteSFX)
-			sourceAttack.Play();
+			sourceAttack.PlayOneShot(sourceAttack.clip);
 	}
 
 	public void PlayDeathSFX(){
 		if (!AudioManager.instance.muteSFX) 
 			sourceDeath.Play ();
+	}
+
+	public void PlayDropItemSFX(){
+		if (!AudioManager.instance.muteSFX)
+			sourceDropItem.Play ();	
 	}
 
 	/// <summary>
@@ -158,6 +188,8 @@ public class UnitSFX : MonoBehaviour {
 			sourceAttack.spatialBlend = 1.0f;
 		}
 	}
+
+
 
 
 

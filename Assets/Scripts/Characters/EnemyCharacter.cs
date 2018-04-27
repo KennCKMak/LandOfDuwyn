@@ -19,6 +19,13 @@ public class EnemyCharacter : Character {
 
 	NavMeshPath myPath;
 
+	public enum EnemyClass {
+		Bandit,
+		Knight
+	}
+
+	public EnemyClass myClass;
+
 	//State = controls movement
 	public enum State {
 		Stationary,
@@ -57,6 +64,7 @@ public class EnemyCharacter : Character {
 	public GameObject target;
 	public float stoppingDist = 0.8f;
 	public float actionDistThreshold = 1.5f;
+	public float aggroRange = 10.0f;
 
 	float elapsedTime = 0.0f;
 	float checkNewTargetTimer = 0.0f;
@@ -72,6 +80,7 @@ public class EnemyCharacter : Character {
 	}
 	void Start () {
 		GameManager.instance.Add (this);
+		transform.name = myClass.ToString ();
 	}
 
 	void InitializeComponents(){
@@ -265,10 +274,7 @@ public class EnemyCharacter : Character {
 		//this sections makes it so that it will auto go to whatever
 		checkNewTargetTimer += Time.deltaTime;
 		if (checkNewTargetTimer > 4.0f) {
-			Debug.Log ("getting new target");
 			target = GetAlliedTarget ();
-			if (target)
-				Debug.Log ("Found " + target.name);
 			checkNewTargetTimer = 0.0f;
 		}
 
@@ -330,7 +336,7 @@ public class EnemyCharacter : Character {
 
 	public GameObject GetAlliedTarget(){
 		//10.0f = detection range
-		return GameManager.instance.GetAlliedTarget(this, 10.0f);
+		return GameManager.instance.GetAlliedTarget(this, aggroRange);
 	}
 
 	public void StartRunning(){
@@ -360,7 +366,7 @@ public class EnemyCharacter : Character {
 		transform.LookAt (new Vector3(obj.transform.position.x, transform.position.y, obj.transform.position.z));
 		Attack ();
 		if(obj.GetComponent<AI_Character>())
-			obj.GetComponent<AI_Character> ().TakeDamage (10);
+			obj.GetComponent<AI_Character> ().TakeDamage (weaponDamage);
 
 		if (obj.GetComponent<PlayerCharacter> ())
 			return;
@@ -393,7 +399,7 @@ public class EnemyCharacter : Character {
 	}
 
 	public void Death(){
-
+		GameManager.instance.AddResource (Resource.ResourceType.Gold, 5 * ((int) myClass + 1));
 
 		if(Random.value > 0.5f)
 			anim.SetTrigger ("DeathA");
@@ -402,6 +408,7 @@ public class EnemyCharacter : Character {
 		GameManager.instance.Remove (this);
 		StartCoroutine (DeathSequence());
 	}
+
 	IEnumerator DeathSequence(){
 		Destroy (gameObject, 4.5f);
 		yield return new WaitForSeconds (4.0f);
@@ -409,6 +416,10 @@ public class EnemyCharacter : Character {
 	}
 
 	public void Respawn(){
+		
+		GameManager.instance.GoldAmount += 5;
+		UIManager.instance.UpdateResourceCount ();
+
 		elapsedTime = 0;
 		Vector2 circle = Random.insideUnitCircle * 22;
 		Vector3 randLocation = new Vector3 (circle.x, 0, circle.y);

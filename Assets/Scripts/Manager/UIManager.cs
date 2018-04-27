@@ -14,6 +14,10 @@ public class UIManager : MonoBehaviour {
 	public TextMeshProUGUI stoneCountText;
 	public TextMeshProUGUI goldCountText;
 
+	protected Color startColor;
+	protected Color destColor;
+	protected bool[] flashing = new bool[3];
+
 
     public GameObject panelRoles;
     public TextMeshProUGUI villagerCountText;
@@ -31,6 +35,7 @@ public class UIManager : MonoBehaviour {
 
 
 	public GameObject ConstructionHelpText;
+	public GameObject ConstructionInfoText;
 
     void Awake(){
 		if (instance == null)
@@ -45,10 +50,23 @@ public class UIManager : MonoBehaviour {
 
 		UpdateResourceCount ();
         UpdateVillagerCount ();
+
+
+		startColor = woodCountText.color;
+		destColor = startColor;
+		for (int i = 0; i < 3; i++) {
+			flashing [i] = false;
+		}
+
+
 	}
 
     void Update() {
         UpdateVillagerCount();
+
+		for (int i = 0; i < 3; i++) {
+			UpdateColorChange (i);
+		}
     }
 		
 	public void SetCenterText(string message){
@@ -208,5 +226,101 @@ public class UIManager : MonoBehaviour {
 
 	public void ShowConstructionHelpText(bool b){
 		ConstructionHelpText.SetActive (b);
+	}
+
+	public void ShowConstructionInfoText(bool b){
+		ConstructionInfoText.SetActive (b);
+		ConstructionInfoText.GetComponent<TextMeshProUGUI> ().text = "";
+	}
+
+	public void UpdateConstructionInfoText(ConstructionManager.BuildingCost cost){
+		string words = "<b>"+cost.Name + "</b>\n";
+		if (cost.Wood > 0)
+			words += "Wood: " + cost.Wood + "\n";
+		if (cost.Stone > 0)
+			words += "Stone: " + cost.Stone + "\n";
+		if (cost.Gold > 0)
+			words += "Gold: " + cost.Gold + "\n";
+
+		string flavourText = "";
+		switch (cost.Name) {
+		case "Sawmill":
+			flavourText = "Activates nearby tree resources\nin a small area";
+			break;
+		case "Smith":
+			flavourText = "Activates nearby stone and gold resources\nin an area";
+			break;
+		case "House":
+			flavourText = "Increases maximum villager population by 8";
+			break;
+		case "Windmill":
+			flavourText = "Activates all resources\nin a massive area";
+			break;
+
+		default:
+			Debug.Log ("Weird building name here");
+			break;
+		}
+
+		ConstructionInfoText.GetComponent<TextMeshProUGUI> ().text = words + flavourText;
+	}
+
+
+
+
+	public void ResetColor(){
+		for(int i = 0; i < 3; i++){
+			ResetColor (i);
+		}
+	}
+
+	public void ResetColor(int num){
+		destColor = startColor;
+	}
+
+
+	public void FlashResourceText(Color color, Resource.ResourceType resourceType){
+		//Debug.Log ("FLASH");
+		//woodCountText.color = Color.red;
+		switch (resourceType) {
+		case Resource.ResourceType.Wood: 
+			StartCoroutine (FlashCoroutine (color, 0));
+			break;
+		case Resource.ResourceType.Stone: 
+			StartCoroutine(FlashCoroutine (color, 1));
+			break;
+		case Resource.ResourceType.Gold: 
+			StartCoroutine(FlashCoroutine (color, 2));
+			break;
+		default:
+			Debug.Log ("Defaulting");
+			break;
+		}
+	}
+
+	IEnumerator FlashCoroutine(Color color, int num){
+		flashing [num] = true;
+
+		if (num == 0)
+			woodCountText.color = color;
+		else if (num == 1)
+			stoneCountText.color = color;//Color.Lerp (woodCountText.color, color, 30.0f * Time.deltaTime);
+		else if (num == 2)
+			goldCountText.color = color;//Color.Lerp (woodCountText.color, color, 30.0f * Time.deltaTime);
+		
+		yield return new WaitForSeconds (0.1f);
+
+		flashing[num] = false;
+		
+	}
+
+	private void UpdateColorChange(int num){
+		if (num == 0)
+			woodCountText.color = Color.Lerp (woodCountText.color, destColor, 8.0f * Time.deltaTime);
+		if(num == 1)
+			stoneCountText.color = Color.Lerp (stoneCountText.color, destColor, 8.0f * Time.deltaTime);
+		if(num == 2)
+			goldCountText.color = Color.Lerp (goldCountText.color, destColor, 8.0f * Time.deltaTime);
+
 	}
 }

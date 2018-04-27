@@ -63,9 +63,9 @@ public class PlayerCameraControl : MonoBehaviour {
 			}
 
 
-			for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
+			for (int i = 0; i < GameManager.instance.stoneList.Count; i++) {
 
-				GameManager.instance.rockList [i].seenByCamera = false;
+				GameManager.instance.stoneList [i].seenByCamera = false;
 			}
 		}
 	}
@@ -83,14 +83,14 @@ public class PlayerCameraControl : MonoBehaviour {
 		}
 
 
-		for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
-			if (!GameManager.instance.rockList [i])
+		for (int i = 0; i < GameManager.instance.stoneList.Count; i++) {
+			if (!GameManager.instance.stoneList [i])
 				continue;
-			Vector3 viewPointPort = GetComponent<Camera>().WorldToViewportPoint (GameManager.instance.rockList [i].transform.position);
+			Vector3 viewPointPort = GetComponent<Camera>().WorldToViewportPoint (GameManager.instance.stoneList [i].transform.position);
 			if (viewPointPort.x >= 0 && viewPointPort.x <= 1 && viewPointPort.y >= 0 && viewPointPort.y <= 1) { 
-				GameManager.instance.rockList [i].seenByCamera = true;
+				GameManager.instance.stoneList [i].seenByCamera = true;
 			} else {
-				GameManager.instance.rockList [i].seenByCamera = false;
+				GameManager.instance.stoneList [i].seenByCamera = false;
 			}
 		}
 	}

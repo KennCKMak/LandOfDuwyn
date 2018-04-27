@@ -5,12 +5,13 @@ using UnityEngine.AI;
 
 public class GameManager : MonoBehaviour {
 
+	public float timescale = 1.0f;
 	public static int defaultResourceActivationRange = 25;
 
 	[Header("Entity Lists")]
 	public List<AI_Character> villagerList = new List<AI_Character>();
 	public List<Resource> treeList = new List<Resource>();
-	public List<Resource> rockList = new List<Resource>();
+	public List<Resource> stoneList = new List<Resource>();
 	public List<Building> buildingsList = new List<Building>();
 	public List<EnemyCharacter> enemyList = new List<EnemyCharacter>();
 
@@ -26,6 +27,7 @@ public class GameManager : MonoBehaviour {
 	[Header("Unit Prefabs")]
 	public GameObject villagerPrefab;
 	public GameObject enemyPrefab;
+	public GameObject enemyKnightPrefab;
 	//public RockResource[] rockResourceArray;
 	[Header("Resource Count")]
 	public int WoodAmount;
@@ -45,7 +47,7 @@ public class GameManager : MonoBehaviour {
 	}
 
 	void Start () {
-		Time.timeScale = 1.0f;
+		Time.timeScale = timescale;
 
 		//starting
 		Cursor.lockState = CursorLockMode.Locked;
@@ -68,15 +70,23 @@ public class GameManager : MonoBehaviour {
 			GameObject newGuy = Instantiate (enemyPrefab, pos, Quaternion.identity) as GameObject;
 			newGuy.name = enemyPrefab.name;
 		}
+
+		Vector3 randPos = Vector3.zero;
+		randPos.x = Random.Range (-5.0f, 5.0f) - 500.0f;
+		randPos.z = Random.Range(-5.0f, 5.0f);
+		randPos.y = 0.01f;
+		GameObject newKnight = Instantiate (enemyKnightPrefab, randPos, Quaternion.identity) as GameObject;
+		newKnight.name = enemyPrefab.name;
 	}
 	void Update () {
 		villagerSpawnTimer += Time.deltaTime;
 
 		if (villagerSpawnTimer > 30.0f && totalVillagers < maxVillagers) {
 			villagerSpawnTimer = 0.0f;
-			for(int i = 0; i < (maxVillagers - totalVillagers)/2; i++){
+			for(int i = 0; i < Mathf.Max(1, (maxVillagers - totalVillagers)/2); i++){
 				GameObject newGuy = Instantiate (villagerPrefab, new Vector3 (Random.Range (-5.0f, 5.0f), 0.0f, Random.Range (-5.0f, 5.0f)), Quaternion.identity) as GameObject;
 				newGuy.name = villagerPrefab.name;
+				AudioManager.instance.PlaySFX ("Success");
 			}
 		}
 
@@ -120,7 +130,7 @@ public class GameManager : MonoBehaviour {
 
 	public void Add(Resource newResource){
 
-		if (treeList.Contains (newResource) || rockList.Contains(newResource))
+		if (treeList.Contains (newResource) || stoneList.Contains(newResource))
 			return;
 
 		switch (newResource.resourceType) {
@@ -128,7 +138,7 @@ public class GameManager : MonoBehaviour {
 			treeList.Add (newResource);
 			break;
 		case Resource.ResourceType.Stone:
-			rockList.Add (newResource);
+			stoneList.Add (newResource);
 			break;
 		default:
 			break;
@@ -138,26 +148,41 @@ public class GameManager : MonoBehaviour {
 
 	public void Add(Building newBuilding){
 
-		if (buildingsList.Contains (newBuilding))
+		if (buildingsList.Contains (newBuilding)) {
+			Debug.Log ("Adding new building already existed");
 			return;
-		buildingsList.Add (newBuilding);
 
-		int num = 1;
-		foreach (Building building in buildingsList) {
-			if (building.structure == Building.Structure.House)
-				num++;
 		}
-		maxVillagers = num * 8;
+		Debug.Log ("Passed");
+		buildingsList.Add (newBuilding);
+		UpdateMaxVillagers ();
 	}
 
 	public void Remove(Building newBuilding){
 		if (buildingsList.Contains (newBuilding)) {
 			buildingsList.Remove (newBuilding);
 			if (newBuilding.structure == Building.Structure.House)
-				maxVillagers -= 8;
+				UpdateMaxVillagers ();
 			//TODO: Disconnect resources from buildings about to be deleted
 		} else
 			Debug.Log ("Tried to remove non-existing building");
+	}
+
+	public void ShowBuildingDropZoneIndicator(bool b){
+		foreach (Building building in buildingsList) {
+			if (building.structure == Building.Structure.ResourceDrop)
+				building.ShowDropZone (b);
+		}
+	}
+
+	public void UpdateMaxVillagers(){
+
+		int num = 0;
+		foreach (Building building in buildingsList) {
+			if (building.structure == Building.Structure.House)
+				num++;
+		}
+		maxVillagers = Mathf.Max(1, num) * 8;
 	}
 
 	public void Add(EnemyCharacter newEnemy){
@@ -168,18 +193,32 @@ public class GameManager : MonoBehaviour {
 
 	public void Remove(EnemyCharacter oldEnemy){
 		if (enemyList.Contains (oldEnemy)) {
+			if (oldEnemy.myClass == EnemyCharacter.EnemyClass.Bandit) {
+
+				//instantiate a new enemy!!
+				Vector3 pos = Vector3.zero;
+
+				pos.x = Random.Range (-5.0f, 5.0f) + 350.0f;
+				pos.z = Random.Range (-5.0f, 5.0f);
+				pos.y = 0.01f;
+
+
+				GameObject newGuy = Instantiate (enemyPrefab, pos, Quaternion.identity) as GameObject;
+				newGuy.name = enemyPrefab.name;
+			} else {
+				Vector3 pos = Vector3.zero;
+
+				pos.x = Random.Range (-5.0f, 5.0f) - 550.0f;
+				pos.z = Random.Range (-5.0f, 5.0f);
+				pos.y = 0.01f;
+
+
+				GameObject newGuy = Instantiate (enemyKnightPrefab, pos, Quaternion.identity) as GameObject;
+				newGuy.name = enemyPrefab.name;
+			}
+
+
 			enemyList.Remove (oldEnemy);
-
-			//instantiate a new enemy!!
-			Vector3 pos = Vector3.zero;
-
-			pos.x = Random.Range (-5.0f, 5.0f) + 350.0f;
-			pos.z = Random.Range (-5.0f, 5.0f);
-			pos.y = 0.01f;
-
-
-			GameObject newGuy = Instantiate (enemyPrefab, pos, Quaternion.identity) as GameObject;
-			newGuy.name = enemyPrefab.name;
 		} else {
 			Debug.Log ("Tried to remove non-existing enemy");
 		}
@@ -245,7 +284,7 @@ public class GameManager : MonoBehaviour {
 		if (resource == Resource.ResourceType.Wood)
 			resourceList = treeList;
 		else if (resource == Resource.ResourceType.Stone)
-			resourceList = rockList;
+			resourceList = stoneList;
 		else
 			return null;
 

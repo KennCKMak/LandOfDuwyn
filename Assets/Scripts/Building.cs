@@ -10,7 +10,9 @@ public class Building : MonoBehaviour {
 	/// 
 	/// </summary>
 	public GameObject buildingTarget;
+	public GameObject dropZone;
 
+	bool Initialized = false;
 
 	[HideInInspector]
 	public List<Collider> colliders = new List<Collider>();
@@ -52,8 +54,19 @@ public class Building : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		GameManager.instance.Add (this);
+		Initialize ();
+	}
+	
+	// Update is called once per frame
+	void Update () {
+	}
 
+	public void Initialize(){
+		if (Initialized)
+			return;
+		GameManager.instance.Add (this);
+		if (structure == Structure.House)
+			GameManager.instance.UpdateMaxVillagers ();
 		if (!buildingTarget)
 			buildingTarget = this.gameObject;
 
@@ -62,12 +75,8 @@ public class Building : MonoBehaviour {
 			ActivateResourcesAroundDrop();
 
 		}
+		Initialized = true;
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	}
-
 
 	public void ActivateResourcesAroundDrop(){
 		if (dropType == ResourceDropType.All || dropType == ResourceDropType.Wood) {
@@ -83,12 +92,12 @@ public class Building : MonoBehaviour {
 		}
 
 		if (dropType == ResourceDropType.All || dropType == ResourceDropType.Stone) {
-			for (int i = 0; i < GameManager.instance.rockList.Count; i++) {
-				if(!(GameManager.instance.rockList [i]))
+			for (int i = 0; i < GameManager.instance.stoneList.Count; i++) {
+				if(!(GameManager.instance.stoneList [i]))
 					continue;
-				if (Distance.GetHorizontalDistance (GameManager.instance.rockList [i].gameObject, this.gameObject) <= resourceActivationRange) {
-					GameManager.instance.rockList [i].Activated = true;
-					GameManager.instance.rockList [i].AddActivatingStructure (this);
+				if (Distance.GetHorizontalDistance (GameManager.instance.stoneList [i].gameObject, this.gameObject) <= resourceActivationRange) {
+					GameManager.instance.stoneList [i].Activated = true;
+					GameManager.instance.stoneList [i].AddActivatingStructure (this);
 				}
 			}
 		}
@@ -152,5 +161,14 @@ public class Building : MonoBehaviour {
 			return;
 		}
 		lineRenderer.enabled = b;
+	}
+
+	public void ShowDropZone(bool b){
+		if (structure != Structure.ResourceDrop)
+			return;
+		if (!dropZone) 
+			dropZone = transform.FindChild ("DropZoneIndicator").gameObject;
+		
+		dropZone.SetActive (b);
 	}
 }

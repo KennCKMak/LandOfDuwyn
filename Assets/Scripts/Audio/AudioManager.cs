@@ -19,11 +19,22 @@ public class AudioManager : MonoBehaviour {
 		Stone,
 		Flesh
 	}
+
+	[System.Serializable]
+	public struct AnnouncementSFX
+	{
+		public SFX announcement;
+		public float announcementTimer;
+		public float cooldownTimer;
+	}
+
+	public AnnouncementSFX[] announcementSFX;
     
     public static AudioManager instance;
 
 
     private AudioSource bgmSource = null;
+	private AudioSource announcementSource = null;
 
     void Awake() {
         if (instance == null)
@@ -37,7 +48,8 @@ public class AudioManager : MonoBehaviour {
         DontDestroyOnLoad(gameObject);
 
 
-        bgmSource = transform.GetChild(0).gameObject.AddComponent<AudioSource>();
+		bgmSource = transform.GetChild(0).gameObject.AddComponent<AudioSource>();
+		announcementSource = transform.GetChild(0).gameObject.AddComponent<AudioSource>();
 
         foreach (SFX s in sfx) {
             s.source = transform.GetChild(1).gameObject.AddComponent<AudioSource>();
@@ -55,7 +67,30 @@ public class AudioManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+
+
+		UpdateAnnouncementTimers ();
+	}
+
+	public void UpdateAnnouncementTimers(){
+		for (int i = 0; i < announcementSFX.Length; i++) {
+			if (announcementSFX [i].cooldownTimer > 0.0f)
+				announcementSFX [i].cooldownTimer -= Time.deltaTime;
+		}
+	}
+
+	public void PlayAnnouncement(string name){
+		for (int i = 0; i < announcementSFX.Length; i++) {
+			if (announcementSFX [i].announcement.name == name && announcementSFX[i].cooldownTimer <= 0.0f) {
+				SFX announce = announcementSFX [i].announcement;
+
+				announcementSource.volume = announce.volume;
+				announcementSource.pitch = announce.pitch;
+				announcementSource.PlayOneShot (announce.clip);
+				announcementSFX [i].cooldownTimer = announcementSFX [i].announcementTimer;
+				
+			}
+		}
 	}
 
     public void PlayBGM(string bgmName) {

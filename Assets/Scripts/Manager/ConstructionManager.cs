@@ -8,10 +8,18 @@ public class ConstructionManager : MonoBehaviour {
 
 	public GameObject[] BuildingPrefabs;
 
-
+	[System.Serializable]
+	public class BuildingCost {
+		public string Name;
+		public int Wood;
+		public int Stone;
+		public int Gold;
+	}
 
 	public static ConstructionManager instance;
 
+	[SerializeField]
+	public BuildingCost[] BuildingRequirements;
 
 	public enum ConstructionPhase{
 		NotBuilding,
@@ -23,6 +31,8 @@ public class ConstructionManager : MonoBehaviour {
 
 	public GameObject hologram;
 	public float rotationElapsedTime = 0.0f;
+
+	int currentSelection = 0;
 
 	void Awake(){
 		if (instance == null)
@@ -63,20 +73,29 @@ public class ConstructionManager : MonoBehaviour {
 
 		if (currentPhase == ConstructionPhase.SelectingBuilding) {
 			if (Input.GetKeyDown (KeyCode.Alpha1)) {
-				StartBuilding (BuildingPrefabs [0]);
-				UIManager.instance.SelectActionBar (0);
+				currentSelection = 0;
+				UIManager.instance.SelectActionBar (currentSelection);
+				UIManager.instance.UpdateConstructionInfoText (getCurrentBuildingCost());
 			}
 			if (Input.GetKeyDown (KeyCode.Alpha2)){
-				StartBuilding (BuildingPrefabs [1]);
-				UIManager.instance.SelectActionBar (1);
+				currentSelection = 1;
+				UIManager.instance.SelectActionBar (currentSelection);
+				UIManager.instance.UpdateConstructionInfoText (getCurrentBuildingCost());
 			}
 			if (Input.GetKeyDown (KeyCode.Alpha3)){
-				StartBuilding (BuildingPrefabs [2]);
-				UIManager.instance.SelectActionBar (2);
+				currentSelection = 2;
+				UIManager.instance.SelectActionBar (currentSelection);
+				UIManager.instance.UpdateConstructionInfoText (getCurrentBuildingCost());
 			}	
 			if (Input.GetKeyDown (KeyCode.Alpha4)) {
-				StartBuilding (BuildingPrefabs [3]);
-				UIManager.instance.SelectActionBar (3);
+				currentSelection = 3;
+				UIManager.instance.SelectActionBar (currentSelection);
+				UIManager.instance.UpdateConstructionInfoText (getCurrentBuildingCost());
+			}
+			if (Input.GetMouseButtonDown (0)) {
+				
+				if(currentSelection != -1 && haveEnoughResources(currentSelection))
+					StartBuilding (BuildingPrefabs [currentSelection]);
 			}
 		} else if (currentPhase == ConstructionPhase.PlacingBuilding) {
 
@@ -157,6 +176,25 @@ public class ConstructionManager : MonoBehaviour {
 
 	}
 
+	bool haveEnoughResources(int num){
+		BuildingCost cost = BuildingRequirements [num];
+
+		if (GameManager.instance.WoodAmount >= cost.Wood &&
+		   GameManager.instance.StoneAmount >= cost.Stone &&
+		   GameManager.instance.GoldAmount >= cost.Gold)
+			return true;
+
+		if (GameManager.instance.WoodAmount < cost.Wood && cost.Wood != 0)
+			UIManager.instance.FlashResourceText (Color.red, Resource.ResourceType.Wood);
+		if (GameManager.instance.StoneAmount < cost.Stone && cost.Stone != 0)
+			UIManager.instance.FlashResourceText (Color.red, Resource.ResourceType.Stone);
+		if (GameManager.instance.GoldAmount < cost.Gold && cost.Gold != 0)
+			UIManager.instance.FlashResourceText (Color.red, Resource.ResourceType.Gold);
+
+		return false;
+
+	}
+
 	bool isHologramValid(){
 		//TODO: CHECK FOR VALID PLACEMENT
 		return true;
@@ -168,17 +206,31 @@ public class ConstructionManager : MonoBehaviour {
 			return;
 
 
-
 		//update gamemanager list
 		GameManager.instance.buildingsList.Add (hologram.GetComponent<Building> ());
 		//building is now functioning
 		hologram.GetComponent<Building> ().enabled = true;
-
+		hologram.GetComponent<Building> ().Initialize ();	
 		hologram.GetComponent<Building> ().SetColliders (true);
 
 
 		hologram = null;
 
+
+		//deduct costs
+		if (BuildingRequirements [currentSelection].Wood != 0) {
+			GameManager.instance.WoodAmount -= BuildingRequirements [currentSelection].Wood;
+			UIManager.instance.FlashResourceText (Color.blue, Resource.ResourceType.Wood);
+		}
+		if (BuildingRequirements [currentSelection].Stone != 0) {
+			GameManager.instance.StoneAmount -= BuildingRequirements[currentSelection].Stone;
+			UIManager.instance.FlashResourceText (Color.blue, Resource.ResourceType.Stone);
+		}
+		if (BuildingRequirements [currentSelection].Gold != 0) {
+			GameManager.instance.GoldAmount -= BuildingRequirements [currentSelection].Gold;
+			UIManager.instance.FlashResourceText (Color.blue, Resource.ResourceType.Gold);
+		}
+		UIManager.instance.UpdateResourceCount ();
 
 		setCurrentPhase (ConstructionPhase.NotBuilding);
 	}
@@ -188,14 +240,19 @@ public class ConstructionManager : MonoBehaviour {
 		switch (phase) {
 		case ConstructionPhase.NotBuilding:
 			UIManager.instance.ShowConstructionHelpText (false);
+			UIManager.instance.ShowConstructionInfoText (false);
+			currentSelection = -1;
+			UIManager.instance.DeselectActionBar ();
 
 			break;
 		case ConstructionPhase.SelectingBuilding:
 			UIManager.instance.ShowConstructionHelpText (true);
+			UIManager.instance.ShowConstructionInfoText (true);
 
 			break;
 		case ConstructionPhase.PlacingBuilding:
 			UIManager.instance.ShowConstructionHelpText (true);
+			UIManager.instance.ShowConstructionInfoText (true);
 			break;
 		default:
 			break;
@@ -212,7 +269,11 @@ public class ConstructionManager : MonoBehaviour {
 
 		case ConstructionPhase.SelectingBuilding:
 			//here is where you press a number and select your choice
-
+			if (currentSelection != -1) {
+				currentSelection = -1;
+				UIManager.instance.DeselectActionBar ();
+				UIManager.instance.ShowConstructionInfoText (false);
+			}
 
 			break;
 
@@ -233,5 +294,9 @@ public class ConstructionManager : MonoBehaviour {
 		}
 	}
 
-
+	BuildingCost getCurrentBuildingCost(){
+		if(currentSelection == -1)
+			return null;
+		return BuildingRequirements [currentSelection];
+	}
 }
